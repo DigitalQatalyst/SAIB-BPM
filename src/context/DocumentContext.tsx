@@ -1,0 +1,178 @@
+import React, { useState, createContext, useContext } from 'react';
+type ApprovalStatus = 'Draft' | 'In Review (Level 1)' | 'In Review (Level 2)' | 'In Review (Level 3)' | 'Approved for Publication' | 'Published' | 'Needs Revision';
+interface Approver {
+  name: string;
+  role: string;
+  email: string;
+  level: number;
+  status: 'Pending' | 'Approved' | 'Requested Changes';
+  date: string;
+  comments?: string;
+}
+interface DocumentData {
+  id: string;
+  requestId: number;
+  title: string;
+  content: string;
+  version: number;
+  status: ApprovalStatus;
+  currentApprovalLevel: number;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  approvers: Approver[];
+  documentUrl?: string;
+}
+interface DocumentContextType {
+  documents: DocumentData[];
+  currentDocument: DocumentData | null;
+  createDocument: (requestId: number, initialData: Partial<DocumentData>) => DocumentData;
+  updateDocument: (id: string, updates: Partial<DocumentData>) => void;
+  getDocumentByRequestId: (requestId: number) => DocumentData | null;
+  setCurrentDocument: (document: DocumentData | null) => void;
+  advanceToNextApprovalStage: (documentId: string) => void;
+  requestRevision: (documentId: string, comments: string, approverLevel: number) => void;
+  approveDocument: (documentId: string, approverLevel: number) => void;
+  publishDocument: (documentId: string) => void;
+}
+const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
+export const DocumentProvider: React.FC<{
+  children: React.ReactNode;
+}> = ({
+  children
+}) => {
+  const [documents, setDocuments] = useState<DocumentData[]>([]);
+  const [currentDocument, setCurrentDocument] = useState<DocumentData | null>(null);
+  const createDocument = (requestId: number, initialData: Partial<DocumentData>): DocumentData => {
+    const newDocument: DocumentData = {
+      id: `doc-${Date.now()}`,
+      requestId,
+      title: initialData.title || 'Untitled Document',
+      content: initialData.content || '',
+      version: 1,
+      status: 'Draft',
+      currentApprovalLevel: 0,
+      createdBy: 'Khalid Al-Otaibi',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      approvers: initialData.approvers || [{
+        name: 'Mohammed Al-Qahtani',
+        role: 'Department Head',
+        email: 'mohammed.alqahtani@saib.com',
+        level: 1,
+        status: 'Pending',
+        date: '-'
+      }, {
+        name: 'Khalid Al-Otaibi',
+        role: 'Compliance Officer',
+        email: 'khalid.alotaibi@saib.com',
+        level: 2,
+        status: 'Pending',
+        date: '-'
+      }, {
+        name: 'Fatima Al-Harbi',
+        role: 'Legal Reviewer',
+        email: 'fatima.alharbi@saib.com',
+        level: 3,
+        status: 'Pending',
+        date: '-'
+      }],
+      ...initialData
+    };
+    setDocuments(prev => [...prev, newDocument]);
+    return newDocument;
+  };
+  const updateDocument = (id: string, updates: Partial<DocumentData>) => {
+    setDocuments(prev => prev.map(doc => doc.id === id ? {
+      ...doc,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+      version: updates.content ? doc.version + 1 : doc.version
+    } : doc));
+    if (currentDocument?.id === id) {
+      setCurrentDocument(prev => prev ? {
+        ...prev,
+        ...updates,
+        updatedAt: new Date().toISOString()
+      } : null);
+    }
+  };
+  const getDocumentByRequestId = (requestId: number): DocumentData | null => {
+    return documents.find(doc => doc.requestId === requestId) || null;
+  };
+  const advanceToNextApprovalStage = (documentId: string) => {
+    const document = documents.find(doc => doc.id === documentId);
+    if (!document) return;
+    const nextLevel = document.currentApprovalLevel + 1;
+    let newStatus: ApprovalStatus;
+    if (nextLevel > 3) {
+      newStatus = 'Approved for Publication';
+    } else {
+      newStatus = `In Review (Level ${nextLevel})` as ApprovalStatus;
+    }
+    updateDocument(documentId, {
+      status: newStatus,
+      currentApprovalLevel: nextLevel
+    });
+    // In a real app, this would trigger an email notification to the next approver
+    console.log(`Notification sent to Level ${nextLevel} approver`);
+  };
+  const requestRevision = (documentId: string, comments: string, approverLevel: number) => {
+    const document = documents.find(doc => doc.id === documentId);
+    if (!document) return;
+    const updatedApprovers = document.approvers.map(approver => approver.level === approverLevel ? {
+      ...approver,
+      status: 'Requested Changes',
+      date: new Date().toISOString().split('T')[0],
+      comments
+    } : approver);
+    updateDocument(documentId, {
+      status: 'Needs Revision',
+      approvers: updatedApprovers
+    });
+    // In a real app, this would trigger an email notification to the document owner
+    console.log(`Revision requested by Level ${approverLevel} approver`);
+  };
+  const approveDocument = (documentId: string, approverLevel: number) => {
+    const document = documents.find(doc => doc.id === documentId);
+    if (!document) return;
+    const updatedApprovers = document.approvers.map(approver => approver.level === approverLevel ? {
+      ...approver,
+      status: 'Approved',
+      date: new Date().toISOString().split('T')[0]
+    } : approver);
+    updateDocument(documentId, {
+      approvers: updatedApprovers
+    });
+    advanceToNextApprovalStage(documentId);
+  };
+  const publishDocument = (documentId: string) => {
+    updateDocument(documentId, {
+      status: 'Published',
+      documentUrl: 'https://saib.sharepoint.com/sites/policies/documents/policy-123.docx'
+    });
+    // In a real app, this would trigger notifications to stakeholders
+    console.log('Document published and stakeholders notified');
+  };
+  return <DocumentContext.Provider value={{
+    documents,
+    currentDocument,
+    createDocument,
+    updateDocument,
+    getDocumentByRequestId,
+    setCurrentDocument,
+    advanceToNextApprovalStage,
+    requestRevision,
+    approveDocument,
+    publishDocument
+  }}>
+      {children}
+    </DocumentContext.Provider>;
+};
+export const useDocument = () => {
+  const context = useContext(DocumentContext);
+  if (context === undefined) {
+    throw new Error('useDocument must be used within a DocumentProvider');
+  }
+  return context;
+};
