@@ -12,7 +12,8 @@ const PolicyRequestForm = () => {
   }>();
   const navigate = useNavigate();
   const {
-    user
+    user,
+    name
   } = useUser();
   // Form state
   const [formState, setFormState] = useState({
@@ -66,14 +67,14 @@ const PolicyRequestForm = () => {
         priority: formState.type === 'Major' ? 'High' : 'Medium',
         latestNote: 'Request submitted by user',
         fullDescription: `${formState.justification}\n\n${formState.description}`,
-        requester: user?.name || 'Anonymous User',
-        requesterEmail: user?.email || 'user@example.com',
-        department: user?.department || 'Not specified'
+        requester: name,
+        requesterEmail: user?.email || 'salem.doe@saib.com',
+        department: user?.department || 'Treasury'
       };
       // Add the request to localStorage
       const savedRequest = addRequest(newRequest);
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       // Set the request number from the generated request
       setRequestNumber(savedRequest.ticketNumber);
       // Trigger storage event to update other components
@@ -87,15 +88,11 @@ const PolicyRequestForm = () => {
       setIsSubmitting(false);
     }
   };
-  // Close the modal and navigate back
+  // Close the modal and navigate to track requests
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Navigate back to service details
-    if (id) {
-      navigate(`/service/${id}`);
-    } else {
-      navigate('/services');
-    }
+    // Navigate directly to track requests page
+    navigate('/track-requests');
   };
   // Get dynamic title based on service type
   const getFormTitle = () => {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CheckCircle, X } from 'lucide-react';
 interface AcknowledgmentModalProps {
   isOpen: boolean;
@@ -10,7 +11,13 @@ const AcknowledgmentModal: React.FC<AcknowledgmentModalProps> = ({
   onClose,
   requestNumber
 }) => {
+  const navigate = useNavigate();
   if (!isOpen) return null;
+  const handleClose = () => {
+    onClose();
+    // Navigate to track requests page
+    navigate('/track-requests');
+  };
   return <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="p-6">
@@ -21,7 +28,7 @@ const AcknowledgmentModal: React.FC<AcknowledgmentModalProps> = ({
                 Request Submitted Successfully
               </h3>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
+            <button onClick={handleClose} className="text-gray-400 hover:text-gray-500">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -45,8 +52,8 @@ const AcknowledgmentModal: React.FC<AcknowledgmentModalProps> = ({
             </p>
           </div>
           <div className="mt-6">
-            <button onClick={onClose} className="w-full px-4 py-2 bg-[#FECC0E] text-gray-900 font-medium rounded-md hover:bg-[#FECC0E]/90 transition-colors">
-              Close
+            <button onClick={handleClose} className="w-full px-4 py-2 bg-[#FECC0E] text-gray-900 font-medium rounded-md hover:bg-[#FECC0E]/90 transition-colors">
+              View My Requests
             </button>
           </div>
         </div>

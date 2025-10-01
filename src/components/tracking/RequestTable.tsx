@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp } from 'lucide-react';
-import { getRequests, RequestItem } from '../../services/requestTracking';
+import { getRequestsByRole, RequestItem } from '../../services/requestTracking';
+import { useUser } from '../../context/UserContext';
 interface RequestTableProps {
   onRequestSelect: (id: number) => void;
 }
 const RequestTable: React.FC<RequestTableProps> = ({
   onRequestSelect
 }) => {
+  const {
+    role,
+    name
+  } = useUser();
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [sortField, setSortField] = useState<keyof RequestItem>('dateCreated');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  // Load requests from storage
+  // Load requests from storage based on user role
   useEffect(() => {
     const loadRequests = () => {
-      const storedRequests = getRequests();
-      setRequests(storedRequests);
+      const filteredRequests = getRequestsByRole(role, name);
+      setRequests(filteredRequests);
     };
     loadRequests();
     // Set up event listener for storage changes
@@ -25,7 +30,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
     return () => {
       window.removeEventListener('storage', loadRequests);
     };
-  }, []);
+  }, [role, name]);
   const handleSort = (field: keyof RequestItem) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -35,7 +40,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
     }
   };
   const filteredRequests = requests.filter(request => {
-    const matchesSearch = request.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase()) || request.requestType.toLowerCase().includes(searchQuery.toLowerCase()) || request.requestDetail.toLowerCase().includes(searchQuery.toLowerCase()) || request.serviceName && request.serviceName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = request.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase()) || request.requestType.toLowerCase().includes(searchQuery.toLowerCase()) || request.requestDetail.toLowerCase().includes(searchQuery.toLowerCase()) || request.serviceName && request.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) || request.requester && request.requester.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'All' || request.status === statusFilter;
     const matchesPriority = priorityFilter === 'All' || request.priority === priorityFilter;
     return matchesSearch && matchesStatus && matchesPriority;
@@ -117,6 +122,9 @@ const RequestTable: React.FC<RequestTableProps> = ({
                     {sortField === 'serviceName' && (sortDirection === 'asc' ? <ChevronUp size={16} className="ml-1" /> : <ChevronDown size={16} className="ml-1" />)}
                   </div>
                 </th>
+                {role !== 'user' && <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Requester
+                  </th>}
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer" onClick={() => handleSort('slaTargetDate')}>
                   <div className="flex items-center">
                     SLA Target
@@ -151,6 +159,9 @@ const RequestTable: React.FC<RequestTableProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {request.serviceName || request.requestType}
                     </td>
+                    {role !== 'user' && <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {request.requester || 'Anonymous User'}
+                      </td>}
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {request.slaTargetDate}
                     </td>
@@ -171,7 +182,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
                       </button>
                     </td>
                   </tr>) : <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                  <td colSpan={role !== 'user' ? 8 : 7} className="px-6 py-10 text-center text-gray-500">
                     {requests.length === 0 ? 'No service requests found. Submit a service request to see it here.' : 'No requests match your current filters.'}
                   </td>
                 </tr>}

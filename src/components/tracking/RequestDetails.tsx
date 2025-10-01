@@ -1,174 +1,59 @@
-import React from 'react';
-import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle } from 'lucide-react';
-import Button from '../shared/Button';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle, FileEdit, ExternalLink, Download } from 'lucide-react';
+import { getRequestById, RequestItem, addApproverComment, getDocumentByRequestId } from '../../services/requestTracking';
+import { useUser } from '../../context/UserContext';
+import { useDocument } from '../../context/DocumentContext';
 interface RequestDetailsProps {
   requestId: number;
   onBackToList: () => void;
 }
-const requests = [{
-  id: 1,
-  ticketNumber: 'REQ-2023-001',
-  dateCreated: '2023-09-15',
-  requestType: 'Delegation Request',
-  requestDetail: 'Temporary delegation of signing authority to Deputy Manager',
-  fullDescription: 'Request for temporary delegation of signing authority to the Deputy Manager of Treasury Department during my absence from September 20 to October 5, 2023. The delegation should include authority to approve transactions up to SAR 500,000.',
-  department: 'Treasury',
-  requester: 'Ahmed Al-Mansour',
-  requesterEmail: 'ahmed.almansour@saib.com.sa',
-  slaTargetDate: '2023-09-18',
-  priority: 'High',
-  status: 'Completed',
-  assignedTo: 'Fatima Al-Harbi',
-  approvers: [{
-    name: 'Mohammed Al-Qahtani',
-    role: 'Department Head',
-    status: 'Approved',
-    date: '2023-09-16'
-  }, {
-    name: 'Khalid Al-Otaibi',
-    role: 'Compliance Officer',
-    status: 'Approved',
-    date: '2023-09-17'
-  }],
-  attachments: [{
-    name: 'Delegation Form.pdf',
-    type: 'PDF',
-    size: '1.2 MB',
-    uploadedBy: 'Ahmed Al-Mansour',
-    date: '2023-09-15'
-  }],
-  timeline: [{
-    date: '2023-09-15 09:30',
-    event: 'Request submitted',
-    user: 'Ahmed Al-Mansour',
-    icon: FileText
-  }, {
-    date: '2023-09-15 11:45',
-    event: 'Request assigned to Fatima Al-Harbi',
-    user: 'System',
-    icon: User
-  }, {
-    date: '2023-09-16 10:15',
-    event: 'Approved by Department Head',
-    user: 'Mohammed Al-Qahtani',
-    icon: CheckCircle
-  }, {
-    date: '2023-09-17 09:20',
-    event: 'Approved by Compliance',
-    user: 'Khalid Al-Otaibi',
-    icon: CheckCircle
-  }, {
-    date: '2023-09-17 14:30',
-    event: 'Delegation document generated',
-    user: 'Fatima Al-Harbi',
-    icon: FileText
-  }, {
-    date: '2023-09-18 08:45',
-    event: 'Request completed',
-    user: 'Fatima Al-Harbi',
-    icon: CheckCircle
-  }],
-  comments: [{
-    date: '2023-09-15 14:20',
-    user: 'Fatima Al-Harbi',
-    text: "I've reviewed your request and will process it. Could you please confirm the exact transaction types that should be included in the delegation?"
-  }, {
-    date: '2023-09-16 08:30',
-    user: 'Ahmed Al-Mansour',
-    text: 'Thank you. The delegation should cover FX transactions, money market placements, and interbank transfers, all up to the SAR 500,000 limit.'
-  }, {
-    date: '2023-09-17 15:00',
-    user: 'Fatima Al-Harbi',
-    text: 'The delegation document has been generated and is now available. Please review and let me know if any changes are needed.'
-  }]
-}, {
-  id: 2,
-  ticketNumber: 'REQ-2023-002',
-  dateCreated: '2023-09-20',
-  requestType: 'Policy Update',
-  requestDetail: 'Update to Information Security Policy based on new SAMA regulations',
-  fullDescription: "Request to update the bank's Information Security Policy to incorporate the new cybersecurity requirements issued by SAMA in Circular No. 41/54321 dated May 12, 2023. The update should address multi-factor authentication requirements, cloud security standards, and incident response procedures.",
-  department: 'Information Security',
-  requester: 'Noura Al-Zahrani',
-  requesterEmail: 'noura.alzahrani@saib.com.sa',
-  slaTargetDate: '2023-10-05',
-  priority: 'Medium',
-  status: 'In Progress',
-  assignedTo: 'Omar Al-Sulaiman',
-  approvers: [{
-    name: 'Pending',
-    role: 'CISO',
-    status: 'Pending',
-    date: '-'
-  }, {
-    name: 'Pending',
-    role: 'CIO',
-    status: 'Pending',
-    date: '-'
-  }, {
-    name: 'Pending',
-    role: 'Compliance Head',
-    status: 'Pending',
-    date: '-'
-  }],
-  attachments: [{
-    name: 'SAMA Circular 41-54321.pdf',
-    type: 'PDF',
-    size: '3.5 MB',
-    uploadedBy: 'Noura Al-Zahrani',
-    date: '2023-09-20'
-  }, {
-    name: 'Current Information Security Policy.docx',
-    type: 'DOCX',
-    size: '2.8 MB',
-    uploadedBy: 'System',
-    date: '2023-09-20'
-  }],
-  timeline: [{
-    date: '2023-09-20 13:15',
-    event: 'Request submitted',
-    user: 'Noura Al-Zahrani',
-    icon: FileText
-  }, {
-    date: '2023-09-20 15:30',
-    event: 'Request assigned to Omar Al-Sulaiman',
-    user: 'System',
-    icon: User
-  }, {
-    date: '2023-09-22 11:20',
-    event: 'Policy review initiated',
-    user: 'Omar Al-Sulaiman',
-    icon: FileText
-  }, {
-    date: '2023-09-28 16:45',
-    event: 'Draft update completed',
-    user: 'Omar Al-Sulaiman',
-    icon: FileText
-  }, {
-    date: '2023-09-29 09:30',
-    event: 'Draft sent to IT Security for review',
-    user: 'Omar Al-Sulaiman',
-    icon: Clock
-  }],
-  comments: [{
-    date: '2023-09-21 10:15',
-    user: 'Omar Al-Sulaiman',
-    text: "I've reviewed the SAMA circular and will begin updating the policy. I'll need input from the IT Security team regarding the technical implementation of the new requirements."
-  }, {
-    date: '2023-09-25 14:40',
-    user: 'Noura Al-Zahrani',
-    text: 'Please ensure that the updated policy addresses the incident response timeline requirements in section 4.3 of the circular.'
-  }, {
-    date: '2023-09-28 16:50',
-    user: 'Omar Al-Sulaiman',
-    text: "I've completed the draft update. The document has been sent to the IT Security team for technical review before we proceed with the formal approval process."
-  }]
-}];
 const RequestDetails: React.FC<RequestDetailsProps> = ({
   requestId,
   onBackToList
 }) => {
-  const request = requests.find(req => req.id === requestId);
+  const {
+    role,
+    name
+  } = useUser();
+  const {
+    createDocument,
+    getDocumentByRequestId: contextGetDocumentByRequestId,
+    approveDocument,
+    requestRevision
+  } = useDocument();
+  const [request, setRequest] = useState<RequestItem | undefined>(getRequestById(requestId));
+  const [newComment, setNewComment] = useState('');
+  const [commentType, setCommentType] = useState<'comment' | 'approve' | 'reject'>('comment');
+  const [document, setDocument] = useState<any>(null);
+  // Load the latest request data and associated document
+  useEffect(() => {
+    const loadData = () => {
+      const updatedRequest = getRequestById(requestId);
+      setRequest(updatedRequest);
+      if (updatedRequest?.documentId) {
+        // First try to get from context
+        const doc = contextGetDocumentByRequestId(requestId);
+        if (doc) {
+          setDocument(doc);
+        } else {
+          // If not in context, try from localStorage (for mock documents)
+          const storedDoc = getDocumentByRequestId(requestId);
+          if (storedDoc) {
+            setDocument(storedDoc);
+          } else {
+            setDocument(null);
+          }
+        }
+      } else {
+        setDocument(null);
+      }
+    };
+    loadData();
+    window.addEventListener('storage', loadData);
+    return () => {
+      window.removeEventListener('storage', loadData);
+    };
+  }, [requestId, contextGetDocumentByRequestId]);
   if (!request) {
     return <div className="text-center py-12">
         <p className="text-gray-500 text-lg">Request not found.</p>
@@ -205,12 +90,52 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
         return 'bg-gray-100 text-gray-800';
     }
   };
+  const handleGenerateDocument = () => {
+    if (role === 'pp_team') {
+      const newDoc = createDocument(requestId, {
+        title: request.requestDetail,
+        content: `# ${request.requestDetail}\n\n## Purpose\nThis document outlines the policy for ${request.requestDetail.toLowerCase()}.\n\n## Scope\nThis policy applies to all employees, contractors, and third parties who have access to the bank's systems and information.\n\n## Policy\n1. All employees must comply with this policy.\n2. Violations may result in disciplinary action.\n3. This policy is subject to annual review.`
+      });
+      setDocument(newDoc);
+      // Trigger storage event
+      window.dispatchEvent(new Event('storage'));
+    }
+  };
+  const handlePostComment = () => {
+    if (newComment.trim()) {
+      if (role === 'approver' && request.documentId) {
+        // Add comment as approver
+        if (commentType === 'approve') {
+          // Approve the document
+          approveDocument(request.documentId, 1);
+          addApproverComment(requestId, name, `Approved: ${newComment}`, true);
+        } else if (commentType === 'reject') {
+          // Request changes
+          requestRevision(request.documentId, newComment, 1);
+          addApproverComment(requestId, name, `Requested changes: ${newComment}`, false);
+        } else {
+          // Just a comment
+          addApproverComment(requestId, name, newComment);
+        }
+      } else {
+        // Regular comment
+        console.log('Adding comment:', newComment);
+      }
+      setNewComment('');
+      setCommentType('comment');
+      // Refresh the request data
+      const updatedRequest = getRequestById(requestId);
+      setRequest(updatedRequest);
+    }
+  };
+  // Comments from approvers
+  const approverComments = request.approverComments || [];
   return <div>
       <button onClick={onBackToList} className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 mb-4">
         <ArrowLeft className="mr-1 h-4 w-4" />
         Back to Request List
       </button>
-      <div className="bg-white shadow rounded-lg overflow-hidden">
+      <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
         <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
           <div>
             <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -226,24 +151,31 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
             </span>
           </div>
         </div>
+        {/* Quick Actions for P&P Team */}
+        {role === 'pp_team' && !document && request.status === 'Pending' && <div className="bg-gray-50 px-4 py-3 sm:px-6 border-t border-gray-200">
+            <button onClick={handleGenerateDocument} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#FECC0E] hover:bg-[#FECC0E]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+              <FileEdit className="mr-2 h-4 w-4" />
+              Generate Document
+            </button>
+          </div>}
         <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <dt className="text-sm font-medium text-gray-500">Description</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {request.fullDescription}
+                {request.fullDescription || request.requestDetail}
               </dd>
             </div>
             <div className="sm:col-span-1">
               <dt className="text-sm font-medium text-gray-500">Requester</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {request.requester}
+                {request.requester || 'Anonymous User'}
               </dd>
             </div>
             <div className="sm:col-span-1">
               <dt className="text-sm font-medium text-gray-500">Department</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {request.department}
+                {request.department || 'Not specified'}
               </dd>
             </div>
             <div className="sm:col-span-1">
@@ -273,125 +205,112 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
             <div className="sm:col-span-1">
               <dt className="text-sm font-medium text-gray-500">Assigned To</dt>
               <dd className="mt-1 text-sm text-gray-900">
-                {request.assignedTo}
+                {request.assignedTo || 'Not assigned'}
               </dd>
             </div>
+            {document && <div className="sm:col-span-2">
+                <dt className="text-sm font-medium text-gray-500">
+                  Generated Document
+                </dt>
+                <dd className="mt-1 text-sm">
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium">{document.title}</h3>
+                      <div className="flex space-x-2">
+                        <a href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/ERQyAc0e_RdFmotNyopxxI0BOV5Wq3HCrZ6lwsEIgU9Nrw?e=WwJYum" target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150">
+                          <ExternalLink size={16} className="mr-1" />
+                          View Document
+                        </a>
+                        <button className="inline-flex items-center px-3 py-1 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150">
+                          <Download size={16} className="mr-1" />
+                          Download
+                        </button>
+                      </div>
+                    </div>
+                    <div className="prose prose-sm max-w-none">
+                      <pre className="whitespace-pre-wrap">
+                        {document.content.substring(0, 300)}...
+                      </pre>
+                    </div>
+                    <div className="mt-4 text-xs text-gray-500 flex justify-between items-center">
+                      <span>
+                        Version: {document.version} | Last updated:{' '}
+                        {new Date(document.updatedAt).toLocaleDateString()}
+                      </span>
+                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                        {document.status}
+                      </span>
+                    </div>
+                  </div>
+                </dd>
+              </div>}
+            {request.approvalStatus && <div className="sm:col-span-1">
+                <dt className="text-sm font-medium text-gray-500">
+                  Approval Status
+                </dt>
+                <dd className="mt-1 text-sm">
+                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${request.approvalStatus === 'Approved' ? 'bg-green-100 text-green-800' : request.approvalStatus === 'Changes Requested' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'}`}>
+                    {request.approvalStatus}
+                  </span>
+                </dd>
+              </div>}
           </dl>
         </div>
-        <div className="border-t border-gray-200">
+      </div>
+      {/* Approval Timeline (for completed requests) */}
+      {request.status === 'Completed' && document && document.approvers && <div className="bg-white shadow rounded-lg overflow-hidden mb-6">
           <div className="px-4 py-5 sm:px-6">
             <h4 className="text-lg font-medium text-gray-900">
-              Approval Status
+              Approval Timeline
             </h4>
-            <div className="mt-4 flow-root">
-              <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                  <table className="min-w-full divide-y divide-gray-300">
-                    <thead>
-                      <tr>
-                        <th scope="col" className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">
-                          Approver
-                        </th>
-                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                          Role
-                        </th>
-                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                          Status
-                        </th>
-                        <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
-                          Date
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {request.approvers.map((approver, index) => <tr key={index}>
-                          <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">
-                            {approver.name}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {approver.role}
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm">
-                            <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(approver.status)}`}>
-                              {approver.status}
-                            </span>
-                          </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                            {approver.date}
-                          </td>
-                        </tr>)}
-                    </tbody>
-                  </table>
+            <div className="mt-4">
+              <div className="relative">
+                {/* Progress Bar */}
+                <div className="overflow-hidden h-2 mb-6 text-xs flex rounded bg-gray-200">
+                  <div style={{
+                width: '100%'
+              }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-green-500"></div>
+                </div>
+                {/* Approval Steps */}
+                <div className="flex justify-between mb-2">
+                  {document.approvers.map((approver: any, index: number) => <div key={index} className="text-center">
+                      <div className="w-8 h-8 mx-auto rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      </div>
+                      <div className="mt-2 text-xs">
+                        <div className="font-medium text-gray-900">
+                          {approver.name}
+                        </div>
+                        <div className="text-gray-500">
+                          Level {approver.level}
+                        </div>
+                        <div className="text-gray-500">
+                          {new Date(approver.date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>)}
+                  <div className="text-center">
+                    <div className="w-8 h-8 mx-auto rounded-full bg-green-100 border-2 border-green-500 flex items-center justify-center">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    </div>
+                    <div className="mt-2 text-xs">
+                      <div className="font-medium text-gray-900">Published</div>
+                      <div className="text-gray-500">
+                        {new Date(document.updatedAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <div className="border-t border-gray-200">
-          <div className="px-4 py-5 sm:px-6">
-            <h4 className="text-lg font-medium text-gray-900">Attachments</h4>
-            <ul className="mt-4 divide-y divide-gray-200">
-              {request.attachments.map((attachment, index) => <li key={index} className="py-3 flex justify-between items-center">
-                  <div className="flex items-center">
-                    <svg className="h-6 w-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <div className="ml-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        {attachment.name}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {attachment.type} · {attachment.size} · Uploaded by{' '}
-                        {attachment.uploadedBy} on {attachment.date}
-                      </p>
-                    </div>
-                  </div>
-                  <button className="ml-4 text-sm font-medium text-[#FECC0E] hover:text-[#e6b800]">
-                    Download
-                  </button>
-                </li>)}
-            </ul>
-          </div>
-        </div>
-        <div className="border-t border-gray-200">
-          <div className="px-4 py-5 sm:px-6">
-            <h4 className="text-lg font-medium text-gray-900">Timeline</h4>
-            <div className="flow-root mt-4">
-              <ul className="-mb-8">
-                {request.timeline.map((event, index) => <li key={index}>
-                    <div className="relative pb-8">
-                      {index !== request.timeline.length - 1 ? <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span> : null}
-                      <div className="relative flex space-x-3">
-                        <div>
-                          <span className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100">
-                            <event.icon className="h-5 w-5 text-gray-500" aria-hidden="true" />
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
-                          <div>
-                            <p className="text-sm text-gray-500">
-                              {event.event}{' '}
-                              <span className="font-medium text-gray-900">
-                                {event.user}
-                              </span>
-                            </p>
-                          </div>
-                          <div className="text-right text-sm whitespace-nowrap text-gray-500">
-                            {event.date}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </li>)}
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-gray-200">
+        </div>}
+      {/* Comments Section */}
+      {(approverComments.length > 0 || role === 'approver') && <div className="bg-white shadow rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:px-6">
             <h4 className="text-lg font-medium text-gray-900">Comments</h4>
             <div className="mt-4 space-y-6">
-              {request.comments.map((comment, index) => <div key={index} className="flex space-x-3">
+              {approverComments.map((comment, index) => <div key={index} className="flex space-x-3">
                   <div className="flex-shrink-0">
                     <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
                       <User className="h-6 w-6 text-gray-500" />
@@ -400,34 +319,52 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
                   <div className="min-w-0 flex-1 bg-gray-50 rounded-lg p-3">
                     <div className="flex justify-between">
                       <p className="text-sm font-medium text-gray-900">
-                        {comment.user}
+                        {comment.approver}
                       </p>
                       <p className="text-sm text-gray-500">{comment.date}</p>
                     </div>
-                    <p className="text-sm text-gray-500 mt-1">{comment.text}</p>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {comment.comment}
+                    </p>
                   </div>
                 </div>)}
-              <div className="mt-6">
-                <div className="flex space-x-3">
-                  <div className="flex-shrink-0">
-                    <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-6 w-6 text-gray-500" />
-                    </div>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="border border-gray-300 rounded-md shadow-sm overflow-hidden focus-within:border-[#FECC0E] focus-within:ring-1 focus-within:ring-[#FECC0E]">
-                      <textarea rows={3} name="comment" id="comment" className="block w-full py-3 border-0 resize-none focus:ring-0 sm:text-sm" placeholder="Add a comment..."></textarea>
-                      <div className="py-2 px-3 bg-gray-50 flex justify-end">
-                        <Button size="sm">Post Comment</Button>
+              {/* Add comment section for approvers */}
+              {role === 'approver' && request.documentId && request.status !== 'Completed' && <div className="mt-6">
+                    <div className="flex space-x-3">
+                      <div className="flex-shrink-0">
+                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                          <User className="h-6 w-6 text-gray-500" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="border border-gray-300 rounded-md shadow-sm overflow-hidden focus-within:border-[#FECC0E] focus-within:ring-1 focus-within:ring-[#FECC0E]">
+                          <textarea rows={3} name="comment" id="comment" className="block w-full py-3 border-0 resize-none focus:ring-0 sm:text-sm" placeholder="Add a comment..." value={newComment} onChange={e => setNewComment(e.target.value)}></textarea>
+                          <div className="py-2 px-3 bg-gray-50 flex justify-between">
+                            <div>
+                              <button onClick={() => setCommentType('comment')} className={`inline-flex items-center px-3 py-1 mr-2 border text-sm font-medium rounded-md ${commentType === 'comment' ? 'bg-gray-100 border-gray-300 text-gray-900' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
+                                <MessageCircle className="h-4 w-4 mr-1" />
+                                Comment
+                              </button>
+                              <button onClick={() => setCommentType('approve')} className={`inline-flex items-center px-3 py-1 mr-2 border text-sm font-medium rounded-md ${commentType === 'approve' ? 'bg-green-100 border-green-300 text-green-900' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Approve
+                              </button>
+                              <button onClick={() => setCommentType('reject')} className={`inline-flex items-center px-3 py-1 border text-sm font-medium rounded-md ${commentType === 'reject' ? 'bg-red-100 border-red-300 text-red-900' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}>
+                                <AlertCircle className="h-4 w-4 mr-1" />
+                                Request Changes
+                              </button>
+                            </div>
+                            <button onClick={handlePostComment} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#FECC0E] hover:bg-[#FECC0E]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                              Post
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  </div>}
             </div>
           </div>
-        </div>
-      </div>
+        </div>}
     </div>;
 };
 export default RequestDetails;

@@ -17,15 +17,273 @@ export interface RequestItem {
   department?: string;
   assignedTo?: string;
   fullDescription?: string;
+  documentId?: string; // Link to generated document
+  approvalStatus?: 'Not Started' | 'In Review' | 'Changes Requested' | 'Approved';
+  approverComments?: Array<{
+    approver: string;
+    comment: string;
+    date: string;
+  }>;
 }
+// Storage key
+const STORAGE_KEY = 'serviceRequests';
+// Storage key for documents
+const DOCUMENTS_STORAGE_KEY = 'generatedDocuments';
+// Initialize localStorage with mock data if empty
+const initializeStorage = () => {
+  if (!localStorage.getItem(STORAGE_KEY)) {
+    // Create document IDs for the mock completed requests
+    const treasuryOpDocId = uuidv4();
+    const interbankDocId = uuidv4();
+    // Initialize with mock documents
+    const mockDocuments = [{
+      id: treasuryOpDocId,
+      requestId: 3,
+      title: 'Treasury Operations Manual',
+      content: `# Treasury Operations Manual
+## 1. Introduction
+This manual outlines the procedures and guidelines for treasury operations at SAIB.
+## 2. FX Transaction Limits
+### 2.1 Transaction Authority
+- Level 1: Up to SAR 100,000
+- Level 2: Up to SAR 250,000
+- Level 3: Up to SAR 500,000
+- Level 4: Above SAR 500,000 (requires dual approval)
+### 2.2 Daily Limits
+- Intraday position limit: SAR 5,000,000
+- Overnight position limit: SAR 2,500,000
+## 3. Money Market Placements
+### 3.1 Authorized Counterparties
+- Only counterparties on the approved list may be used
+- Counterparty limits must be adhered to at all times
+### 3.2 Placement Procedures
+- All placements must be documented in the treasury system
+- Confirmation must be obtained within 24 hours
+- Settlement instructions must be verified before transaction
+## 4. Risk Management
+### 4.1 Market Risk
+- Daily position reports must be generated and reviewed
+- Stress testing must be conducted monthly
+### 4.2 Operational Risk
+- Segregation of duties between front, middle, and back office
+- All calls must be recorded
+- All transactions must be confirmed in writing`,
+      version: '1.2',
+      status: 'Published',
+      createdBy: 'Khalid Al-Otaibi',
+      createdAt: '2023-08-10T10:30:00Z',
+      updatedAt: '2023-08-14T14:45:00Z',
+      currentApprovalLevel: 3,
+      approvers: [{
+        level: 1,
+        name: 'Mohammed Al-Qahtani',
+        status: 'Approved',
+        date: '2023-08-12T09:15:00Z'
+      }, {
+        level: 2,
+        name: 'Ahmed Al-Mansour',
+        status: 'Approved',
+        date: '2023-08-13T11:20:00Z'
+      }, {
+        level: 3,
+        name: 'Fatima Al-Harbi',
+        status: 'Approved',
+        date: '2023-08-14T10:05:00Z'
+      }]
+    }, {
+      id: interbankDocId,
+      requestId: 4,
+      title: 'Interbank Transfer Procedures',
+      content: `# Interbank Transfer Procedures
+## 1. Purpose
+This document outlines the procedures for conducting secure interbank transfers.
+## 2. Scope
+These procedures apply to all interbank transfers processed by the Treasury Department.
+## 3. Authorization Matrix
+### 3.1 Transaction Limits
+- Up to SAR 100,000: Single approval (Level 1)
+- SAR 100,001 - 500,000: Two approvals (Level 1 + Level 2)
+- Above SAR 500,000: Three approvals (Level 1 + Level 2 + Level 3)
+### 3.2 Approval Levels
+- Level 1: Treasury Officers
+- Level 2: Treasury Managers
+- Level 3: Treasury Head or designate
+## 4. Security Measures
+### 4.1 Authentication
+- Two-factor authentication required for all transfers
+- Biometric verification for high-value transfers
+- Token-based authentication for system access
+### 4.2 Verification
+- Call-back verification required for all transfers above SAR 50,000
+- Beneficiary bank confirmation for transfers above SAR 250,000
+- Dual verification of account details prior to submission
+## 5. Documentation Requirements
+- All transfer requests must be documented in the prescribed form
+- Supporting documentation must be attached
+- Audit trail of approvals must be maintained for 7 years
+## 6. Monitoring and Reporting
+- Daily reconciliation of all transfers
+- Weekly review of unusual transactions
+- Monthly reporting to Compliance Department`,
+      version: '1.0',
+      status: 'Published',
+      createdBy: 'Khalid Al-Otaibi',
+      createdAt: '2023-07-15T09:20:00Z',
+      updatedAt: '2023-07-20T15:30:00Z',
+      currentApprovalLevel: 3,
+      approvers: [{
+        level: 1,
+        name: 'Mohammed Al-Qahtani',
+        status: 'Approved',
+        date: '2023-07-17T14:25:00Z'
+      }, {
+        level: 2,
+        name: 'Ahmed Al-Mansour',
+        status: 'Approved',
+        date: '2023-07-18T10:40:00Z'
+      }, {
+        level: 3,
+        name: 'Fatima Al-Harbi',
+        status: 'Approved',
+        date: '2023-07-19T16:15:00Z'
+      }]
+    }];
+    if (!localStorage.getItem(DOCUMENTS_STORAGE_KEY)) {
+      localStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(mockDocuments));
+    }
+    const initialRequests: RequestItem[] = [
+    // Original mock requests for P&P team
+    {
+      id: 1,
+      ticketNumber: 'REQ-2023-001',
+      dateCreated: '2023-09-15',
+      requestType: 'Policy Request',
+      requestDetail: 'Update Information Security Policy',
+      serviceName: 'Policy: Information Security Policy',
+      serviceCategory: 'Policy Management',
+      slaTargetDate: '2023-09-25',
+      priority: 'High',
+      status: 'In Progress',
+      latestNote: 'Request assigned to team member',
+      requester: 'Salem Doe',
+      requesterEmail: 'salem.doe@saib.com',
+      department: 'Treasury',
+      assignedTo: 'Khalid Al-Otaibi',
+      fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.'
+    }, {
+      id: 2,
+      ticketNumber: 'REQ-2023-002',
+      dateCreated: '2023-09-10',
+      requestType: 'Policy Request',
+      requestDetail: 'Revise Corporate Governance Policy',
+      serviceName: 'Policy: Corporate Governance Policy',
+      serviceCategory: 'Policy Management',
+      slaTargetDate: '2023-09-28',
+      priority: 'Medium',
+      status: 'In Progress',
+      latestNote: 'Document in review process',
+      requester: 'Fatima Al-Harbi',
+      requesterEmail: 'fatima.alharbi@saib.com',
+      department: 'Legal',
+      assignedTo: 'Khalid Al-Otaibi',
+      fullDescription: 'Update needed to align with new regulatory requirements from Capital Market Authority.'
+    },
+    // Add completed mock requests for Salem Doe
+    {
+      id: 3,
+      ticketNumber: 'REQ-2023-003',
+      dateCreated: '2023-08-05',
+      requestType: 'Policy Request',
+      requestDetail: 'Treasury Operations Manual Update',
+      serviceName: 'Policy: Treasury Operations Manual',
+      serviceCategory: 'Policy Management',
+      slaTargetDate: '2023-08-15',
+      priority: 'Medium',
+      status: 'Completed',
+      latestNote: 'Document published and request completed',
+      requester: 'Salem Doe',
+      requesterEmail: 'salem.doe@saib.com',
+      department: 'Treasury',
+      assignedTo: 'Khalid Al-Otaibi',
+      fullDescription: 'Update the Treasury Operations Manual to include new FX transaction limits and procedures for money market placements.',
+      documentId: treasuryOpDocId,
+      approvalStatus: 'Approved',
+      approverComments: [{
+        approver: 'Mohammed Al-Qahtani',
+        comment: 'Approved: The updated manual provides clear guidance on transaction limits and procedures.',
+        date: '2023-08-12'
+      }, {
+        approver: 'Ahmed Al-Mansour',
+        comment: 'Approved: Well structured and comprehensive. All requirements have been addressed.',
+        date: '2023-08-13'
+      }, {
+        approver: 'Fatima Al-Harbi',
+        comment: 'Approved: Final approval granted. This document is ready for publication.',
+        date: '2023-08-14'
+      }]
+    }, {
+      id: 4,
+      ticketNumber: 'REQ-2023-004',
+      dateCreated: '2023-07-12',
+      requestType: 'Procedure Request',
+      requestDetail: 'Interbank Transfer Procedures',
+      serviceName: 'Procedure: Interbank Transfer Procedures',
+      serviceCategory: 'Procedure Management',
+      slaTargetDate: '2023-07-22',
+      priority: 'High',
+      status: 'Completed',
+      latestNote: 'Document published and request completed',
+      requester: 'Salem Doe',
+      requesterEmail: 'salem.doe@saib.com',
+      department: 'Treasury',
+      assignedTo: 'Khalid Al-Otaibi',
+      fullDescription: 'Create a new procedure document for interbank transfers that includes enhanced security measures and approval workflows.',
+      documentId: interbankDocId,
+      approvalStatus: 'Approved',
+      approverComments: [{
+        approver: 'Mohammed Al-Qahtani',
+        comment: 'Approved: The security measures are comprehensive and meet our requirements.',
+        date: '2023-07-17'
+      }, {
+        approver: 'Ahmed Al-Mansour',
+        comment: 'Approved: The approval matrix is clear and appropriate for our risk profile.',
+        date: '2023-07-18'
+      }, {
+        approver: 'Fatima Al-Harbi',
+        comment: 'Approved: This document provides excellent guidance for secure interbank transfers.',
+        date: '2023-07-19'
+      }]
+    }];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(initialRequests));
+  }
+};
+// Call initialization
+initializeStorage();
 // Get all requests from localStorage
 export const getRequests = (): RequestItem[] => {
   try {
-    const requests = localStorage.getItem('serviceRequests');
+    const requests = localStorage.getItem(STORAGE_KEY);
     return requests ? JSON.parse(requests) : [];
   } catch (error) {
     console.error('Error retrieving requests from localStorage:', error);
     return [];
+  }
+};
+// Get requests filtered by user role
+export const getRequestsByRole = (role: string, userName: string): RequestItem[] => {
+  const requests = getRequests();
+  switch (role) {
+    case 'user':
+      // Regular users only see their own requests
+      return requests.filter(req => req.requester === userName);
+    case 'pp_team':
+      // P&P team members see all requests, with their assigned ones first
+      return [...requests.filter(req => req.assignedTo === userName), ...requests.filter(req => req.assignedTo !== userName)];
+    case 'approver':
+      // Approvers see requests that have documents generated and need approval
+      return requests.filter(req => (req.status === 'In Progress' || req.status === 'Approved') && req.documentId && (req.approvalStatus === 'In Review' || !req.approvalStatus));
+    default:
+      return requests;
   }
 };
 // Add a new request
@@ -63,10 +321,14 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
       dateCreated,
       slaTargetDate,
       status: 'Pending',
+      assignedTo: 'Khalid Al-Otaibi',
+      // Auto-assign to P&P team member
+      approvalStatus: 'Not Started',
+      approverComments: [],
       ...request
     };
     // Save to localStorage
-    localStorage.setItem('serviceRequests', JSON.stringify([...requests, newRequest]));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...requests, newRequest]));
     return newRequest;
   } catch (error) {
     console.error('Error adding request to localStorage:', error);
@@ -89,12 +351,51 @@ export const updateRequest = (id: number, updates: Partial<RequestItem>): Reques
       ...updates
     };
     requests[index] = updatedRequest;
-    localStorage.setItem('serviceRequests', JSON.stringify(requests));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
     return updatedRequest;
   } catch (error) {
     console.error('Error updating request in localStorage:', error);
     throw error;
   }
+};
+// Link a document to a request
+export const linkDocumentToRequest = (requestId: number, documentId: string): RequestItem | undefined => {
+  return updateRequest(requestId, {
+    documentId,
+    status: 'In Progress',
+    approvalStatus: 'In Review',
+    latestNote: 'Document generated and sent for approval'
+  });
+};
+// Add approver comment to request
+export const addApproverComment = (requestId: number, approver: string, comment: string, approve: boolean = false): RequestItem | undefined => {
+  const request = getRequestById(requestId);
+  if (!request) return undefined;
+  const newComment = {
+    approver,
+    comment,
+    date: new Date().toISOString().split('T')[0]
+  };
+  const approverComments = request.approverComments || [];
+  const updates: Partial<RequestItem> = {
+    approverComments: [...approverComments, newComment]
+  };
+  if (approve) {
+    updates.approvalStatus = 'Approved';
+    updates.status = 'Approved';
+    updates.latestNote = `Approved by ${approver}`;
+  } else {
+    updates.approvalStatus = 'Changes Requested';
+    updates.latestNote = `Changes requested by ${approver}`;
+  }
+  return updateRequest(requestId, updates);
+};
+// Complete a request (final publication)
+export const completeRequest = (requestId: number): RequestItem | undefined => {
+  return updateRequest(requestId, {
+    status: 'Completed',
+    latestNote: 'Document published and request completed'
+  });
 };
 // Delete a request
 export const deleteRequest = (id: number): boolean => {
@@ -102,7 +403,7 @@ export const deleteRequest = (id: number): boolean => {
     const requests = getRequests();
     const filteredRequests = requests.filter(request => request.id !== id);
     if (filteredRequests.length === requests.length) return false;
-    localStorage.setItem('serviceRequests', JSON.stringify(filteredRequests));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(filteredRequests));
     return true;
   } catch (error) {
     console.error('Error deleting request from localStorage:', error);
@@ -110,8 +411,8 @@ export const deleteRequest = (id: number): boolean => {
   }
 };
 // Get dashboard stats
-export const getDashboardStats = () => {
-  const requests = getRequests();
+export const getDashboardStats = (role: string, userName: string) => {
+  const requests = getRequestsByRole(role, userName);
   const totalRequests = requests.length;
   const activeRequests = requests.filter(req => req.status === 'Pending' || req.status === 'In Progress').length;
   const completedRequests = requests.filter(req => req.status === 'Completed').length;
@@ -128,10 +429,48 @@ export const getDashboardStats = () => {
     }, 0);
     avgDaysToClose = parseFloat((totalDays / completedReqs.length).toFixed(1));
   }
+  // Role-specific stats
+  let roleSpecificStats = {};
+  if (role === 'pp_team') {
+    roleSpecificStats = {
+      pendingAssignment: requests.filter(req => req.status === 'Pending' && !req.assignedTo).length,
+      inDrafting: requests.filter(req => req.status === 'In Progress' && !req.documentId).length,
+      inApproval: requests.filter(req => req.status === 'In Progress' && req.documentId && req.approvalStatus === 'In Review').length,
+      needsRevision: requests.filter(req => req.approvalStatus === 'Changes Requested').length
+    };
+  } else if (role === 'approver') {
+    roleSpecificStats = {
+      pendingReview: requests.filter(req => req.approvalStatus === 'In Review').length,
+      approvedByMe: requests.filter(req => {
+        return req.approverComments?.some(comment => comment.approver === userName && comment.comment.includes('Approved'));
+      }).length
+    };
+  }
   return {
     totalRequests,
     activeRequests,
     completedRequests,
-    avgDaysToClose
+    avgDaysToClose,
+    ...roleSpecificStats
   };
+};
+// Get generated documents
+export const getGeneratedDocuments = () => {
+  try {
+    const documents = localStorage.getItem(DOCUMENTS_STORAGE_KEY);
+    return documents ? JSON.parse(documents) : [];
+  } catch (error) {
+    console.error('Error retrieving documents from localStorage:', error);
+    return [];
+  }
+};
+// Get document by ID
+export const getDocumentById = (documentId: string) => {
+  const documents = getGeneratedDocuments();
+  return documents.find((doc: any) => doc.id === documentId);
+};
+// Get document by request ID
+export const getDocumentByRequestId = (requestId: number) => {
+  const documents = getGeneratedDocuments();
+  return documents.find((doc: any) => doc.requestId === requestId);
 };

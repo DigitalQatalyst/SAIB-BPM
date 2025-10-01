@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp, UserPlus, FileEdit, CheckCircle, MessageCircle, XCircle } from 'lucide-react';
-import { getRequests, RequestItem, updateRequest } from '../../services/requestTracking';
+import { getRequestsByRole, RequestItem, updateRequest } from '../../services/requestTracking';
+import { useUser } from '../../context/UserContext';
 interface RequestManagementTableProps {
   onRequestSelect: (id: number) => void;
 }
 const RequestManagementTable: React.FC<RequestManagementTableProps> = ({
   onRequestSelect
 }) => {
+  const {
+    role,
+    name
+  } = useUser();
   const [requests, setRequests] = useState<RequestItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
@@ -16,8 +21,8 @@ const RequestManagementTable: React.FC<RequestManagementTableProps> = ({
   // Load requests from storage
   useEffect(() => {
     const loadRequests = () => {
-      const storedRequests = getRequests();
-      setRequests(storedRequests);
+      const filteredRequests = getRequestsByRole(role, name);
+      setRequests(filteredRequests);
     };
     loadRequests();
     // Set up event listener for storage changes
@@ -25,7 +30,7 @@ const RequestManagementTable: React.FC<RequestManagementTableProps> = ({
     return () => {
       window.removeEventListener('storage', loadRequests);
     };
-  }, []);
+  }, [role, name]);
   const handleSort = (field: keyof RequestItem) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -66,7 +71,6 @@ const RequestManagementTable: React.FC<RequestManagementTableProps> = ({
     }
   };
   const handleQuickAction = (requestId: number, action: string) => {
-    // In a real app, this would call your API
     let newStatus = '';
     let newNote = '';
     switch (action) {
@@ -97,7 +101,8 @@ const RequestManagementTable: React.FC<RequestManagementTableProps> = ({
       }
       updateRequest(requestId, updates);
       // Refresh the requests
-      setRequests(getRequests());
+      const filteredRequests = getRequestsByRole(role, name);
+      setRequests(filteredRequests);
       // Dispatch storage event to update other components
       window.dispatchEvent(new Event('storage'));
     } catch (error) {
@@ -214,9 +219,9 @@ const RequestManagementTable: React.FC<RequestManagementTableProps> = ({
                               <XCircle size={18} />
                             </button>
                           </>}
-                        {request.status === 'In Progress' && <button onClick={() => handleQuickAction(request.id, 'document')} className="text-purple-600 hover:text-purple-900 p-1" title="Generate Document">
-                            <FileEdit size={18} />
-                          </button>}
+                        {request.status === 'In Progress' && !request.documentId && <button onClick={() => onRequestSelect(request.id)} className="text-purple-600 hover:text-purple-900 p-1" title="Generate Document">
+                              <FileEdit size={18} />
+                            </button>}
                         <button onClick={() => handleQuickAction(request.id, 'feedback')} className="text-gray-600 hover:text-gray-900 p-1" title="Request Feedback">
                           <MessageCircle size={18} />
                         </button>

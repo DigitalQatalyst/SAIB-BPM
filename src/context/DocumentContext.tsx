@@ -1,4 +1,5 @@
-import React, { useState, createContext, useContext } from 'react';
+import React, { useEffect, useState, createContext, useContext } from 'react';
+import { getRequestById, linkDocumentToRequest } from '../services/requestTracking';
 type ApprovalStatus = 'Draft' | 'In Review (Level 1)' | 'In Review (Level 2)' | 'In Review (Level 3)' | 'Approved for Publication' | 'Published' | 'Needs Revision';
 interface Approver {
   name: string;
@@ -29,12 +30,14 @@ interface DocumentContextType {
   createDocument: (requestId: number, initialData: Partial<DocumentData>) => DocumentData;
   updateDocument: (id: string, updates: Partial<DocumentData>) => void;
   getDocumentByRequestId: (requestId: number) => DocumentData | null;
+  getDocumentById: (id: string) => DocumentData | null;
   setCurrentDocument: (document: DocumentData | null) => void;
   advanceToNextApprovalStage: (documentId: string) => void;
   requestRevision: (documentId: string, comments: string, approverLevel: number) => void;
   approveDocument: (documentId: string, approverLevel: number) => void;
   publishDocument: (documentId: string) => void;
 }
+const STORAGE_KEY = 'policyDocuments';
 const DocumentContext = createContext<DocumentContextType | undefined>(undefined);
 export const DocumentProvider: React.FC<{
   children: React.ReactNode;
@@ -43,11 +46,37 @@ export const DocumentProvider: React.FC<{
 }) => {
   const [documents, setDocuments] = useState<DocumentData[]>([]);
   const [currentDocument, setCurrentDocument] = useState<DocumentData | null>(null);
+  // Load documents from localStorage on mount
+  useEffect(() => {
+    const loadDocuments = () => {
+      try {
+        const storedDocs = localStorage.getItem(STORAGE_KEY);
+        if (storedDocs) {
+          setDocuments(JSON.parse(storedDocs));
+        }
+      } catch (error) {
+        console.error('Error loading documents from localStorage:', error);
+      }
+    };
+    loadDocuments();
+    window.addEventListener('storage', loadDocuments);
+    return () => {
+      window.removeEventListener('storage', loadDocuments);
+    };
+  }, []);
+  // Save documents to localStorage whenever they change
+  useEffect(() => {
+    if (documents.length > 0) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(documents));
+    }
+  }, [documents]);
   const createDocument = (requestId: number, initialData: Partial<DocumentData>): DocumentData => {
+    // Get request details to pre-fill document
+    const request = getRequestById(requestId);
     const newDocument: DocumentData = {
       id: `doc-${Date.now()}`,
       requestId,
-      title: initialData.title || 'Untitled Document',
+      title: initialData.title || request?.requestDetail || 'Untitled Document',
       content: initialData.content || '',
       version: 1,
       status: 'Draft',
@@ -56,16 +85,16 @@ export const DocumentProvider: React.FC<{
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       approvers: initialData.approvers || [{
-        name: 'Mohammed Al-Qahtani',
-        role: 'Department Head',
-        email: 'mohammed.alqahtani@saib.com',
+        name: 'Ahmed Al-Rashid',
+        role: 'Compliance Officer',
+        email: 'ahmed.alrashid@saib.com',
         level: 1,
         status: 'Pending',
         date: '-'
       }, {
-        name: 'Khalid Al-Otaibi',
-        role: 'Compliance Officer',
-        email: 'khalid.alotaibi@saib.com',
+        name: 'Mohammed Al-Qahtani',
+        role: 'Department Head',
+        email: 'mohammed.alqahtani@saib.com',
         level: 2,
         status: 'Pending',
         date: '-'
@@ -80,6 +109,12 @@ export const DocumentProvider: React.FC<{
       ...initialData
     };
     setDocuments(prev => [...prev, newDocument]);
+    // Link document to request
+    if (requestId) {
+      linkDocumentToRequest(requestId, newDocument.id);
+      // Trigger storage event to update other components
+      window.dispatchEvent(new Event('storage'));
+    }
     return newDocument;
   };
   const updateDocument = (id: string, updates: Partial<DocumentData>) => {
@@ -93,12 +128,36 @@ export const DocumentProvider: React.FC<{
       setCurrentDocument(prev => prev ? {
         ...prev,
         ...updates,
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
+        version: updates.content ? prev.version + 1 : prev.version
       } : null);
     }
+    // Trigger storage event to update other components
+    window.dispatchEvent(new Event('storage'));
   };
   const getDocumentByRequestId = (requestId: number): DocumentData | null => {
-    return documents.find(doc => doc.requestId === requestId) || null;
+    // First check if we have the document in our state
+    const existingDoc = documents.find(doc => doc.requestId === requestId);
+    if (existingDoc) {
+      return existingDoc;
+    }
+    // If not in state, check localStorage (for mock completed documents)
+    try {
+      const storedDocuments = localStorage.getItem('generatedDocuments');
+      if (storedDocuments) {
+        const parsedDocuments = JSON.parse(storedDocuments);
+        const doc = parsedDocuments.find((doc: any) => doc.requestId === requestId);
+        if (doc) {
+          return doc;
+        }
+      }
+    } catch (error) {
+      console.error('Error retrieving document from localStorage:', error);
+    }
+    return null;
+  };
+  const getDocumentById = (id: string): DocumentData | null => {
+    return documents.find(doc => doc.id === id) || null;
   };
   const advanceToNextApprovalStage = (documentId: string) => {
     const document = documents.find(doc => doc.id === documentId);
@@ -114,8 +173,8 @@ export const DocumentProvider: React.FC<{
       status: newStatus,
       currentApprovalLevel: nextLevel
     });
-    // In a real app, this would trigger an email notification to the next approver
-    console.log(`Notification sent to Level ${nextLevel} approver`);
+    // Trigger storage event to update other components
+    window.dispatchEvent(new Event('storage'));
   };
   const requestRevision = (documentId: string, comments: string, approverLevel: number) => {
     const document = documents.find(doc => doc.id === documentId);
@@ -130,8 +189,8 @@ export const DocumentProvider: React.FC<{
       status: 'Needs Revision',
       approvers: updatedApprovers
     });
-    // In a real app, this would trigger an email notification to the document owner
-    console.log(`Revision requested by Level ${approverLevel} approver`);
+    // Trigger storage event to update other components
+    window.dispatchEvent(new Event('storage'));
   };
   const approveDocument = (documentId: string, approverLevel: number) => {
     const document = documents.find(doc => doc.id === documentId);
@@ -151,8 +210,18 @@ export const DocumentProvider: React.FC<{
       status: 'Published',
       documentUrl: 'https://saib.sharepoint.com/sites/policies/documents/policy-123.docx'
     });
-    // In a real app, this would trigger notifications to stakeholders
-    console.log('Document published and stakeholders notified');
+    // Find the associated request and mark it as completed
+    const document = documents.find(doc => doc.id === documentId);
+    if (document && document.requestId) {
+      const {
+        requestId
+      } = document;
+      import('../services/requestTracking').then(module => {
+        module.completeRequest(requestId);
+        // Trigger storage event to update other components
+        window.dispatchEvent(new Event('storage'));
+      });
+    }
   };
   return <DocumentContext.Provider value={{
     documents,
@@ -160,6 +229,7 @@ export const DocumentProvider: React.FC<{
     createDocument,
     updateDocument,
     getDocumentByRequestId,
+    getDocumentById,
     setCurrentDocument,
     advanceToNextApprovalStage,
     requestRevision,

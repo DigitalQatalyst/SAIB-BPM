@@ -169,12 +169,8 @@ const ServiceRequestForm = () => {
   // Close the modal and navigate back
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Navigate back to service details
-    if (id) {
-      navigate(`/service/${id}`);
-    } else {
-      navigate('/services');
-    }
+    // Navigate to track requests page
+    navigate('/track-requests');
   };
   // Get dynamic title based on service type
   const getFormTitle = () => {
