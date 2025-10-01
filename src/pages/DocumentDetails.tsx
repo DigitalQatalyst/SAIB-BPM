@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, FileText, CheckCircle, AlertTriangle, Download, BookmarkCheck, Bookmark, ChevronRight, ChevronDown, ChevronUp, Share2, FileBarChart, BarChart, Users, Calendar, Bell, Star, Scale, Check, Copy, ExternalLink, Building, Tag, User, CheckSquare, Globe } from 'lucide-react';
+import { ArrowLeft, Clock, FileText, CheckCircle, AlertTriangle, Download, BookmarkCheck, Bookmark, ChevronRight, ChevronDown, ChevronUp, Share2, FileBarChart, BarChart, Users, Calendar, Bell, Star, Scale, Check, Copy, ExternalLink, Building, Tag, User, CheckSquare, Globe, ArrowRight, Shield } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useComparison } from '../context/ComparisonContext';
 import ComparisonPanel from '../components/comparison/ComparisonPanel';
@@ -1092,50 +1092,45 @@ const DocumentDetails = () => {
             <h2 className="text-xl font-bold text-gray-900 mb-6">
               Related Documents
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {relatedDocuments.map(relatedDoc => <Link key={relatedDoc.id} to={`/document/${relatedDoc.id}`} className="group">
-                  <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden h-full transition-all duration-300 hover:border-[#FECC0E] hover:shadow-md group-hover:border-l-4 group-hover:border-[#FECC0E]">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {relatedDocuments.map(relatedDoc => <Link to={`/document/${relatedDoc.id}`} key={relatedDoc.id} className="block h-full">
+                  <div className="relative bg-white rounded-lg border border-gray-200 overflow-hidden h-full transition-all duration-300 hover:border-[#FECC0E] hover:shadow-md group cursor-pointer">
+                    {/* Yellow border on left side when hovered */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-[#FECC0E] transition-all duration-300"></div>
                     <div className="p-6 flex flex-col h-full">
-                      <div className="flex items-center mb-4">
-                        <div className="h-12 w-12 bg-gray-100 rounded-full flex items-center justify-center">
-                          <FileText className="h-6 w-6 text-gray-400" />
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center">
+                          <FileText className="h-8 w-8 text-gray-400" />
                         </div>
-                        <div className="ml-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(relatedDoc.status)}`}>
-                            {relatedDoc.status}
-                          </span>
+                        <div className="text-gray-500 text-sm">
+                          v{relatedDoc.version}
                         </div>
                       </div>
-                      <h3 className="text-base font-medium text-gray-900 mb-2 line-clamp-1 overflow-hidden group-hover:text-[#9E800D]">
+                      {/* Title: 18px font size, truncate to 2 lines */}
+                      <h3 className="text-lg font-medium text-gray-900 mb-4 line-clamp-2 h-14">
                         {relatedDoc.title}
                       </h3>
-                      <p className="text-sm text-gray-500 mb-4 line-clamp-3 overflow-hidden flex-grow">
-                        {relatedDoc.description}
-                      </p>
-                      {/* Tags */}
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal bg-gray-100 text-gray-800">
+                      {/* Tags: similar to service cards, font size 12px, one line only */}
+                      <div className="flex flex-wrap gap-2 mb-4 overflow-hidden h-7">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium 
+                            ${relatedDoc.status === 'Active' ? 'bg-green-100 text-green-800' : relatedDoc.status === 'Under Review' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {relatedDoc.status}
+                        </span>
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                           {relatedDoc.type}
                         </span>
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal bg-gray-100 text-gray-800">
-                          {relatedDoc.category}
-                        </span>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-normal ${getLanguageColor(relatedDoc.language)}`}>
-                          <Globe className="h-3 w-3 mr-1" />
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {relatedDoc.language}
                         </span>
                       </div>
-                      {/* Divider line */}
-                      <div className="border-t border-gray-100 pt-4 mt-auto flex justify-between items-center">
-                        <div className="flex items-center">
-                          <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                          <span className="text-xs text-gray-500">
-                            {relatedDoc.lastUpdated}
-                          </span>
-                        </div>
-                        <span className="text-sm font-normal text-[#9E800D] group-hover:text-[#FECC0E] transition-colors flex items-center">
-                          View details{' '}
-                          <ChevronRight size={16} className="ml-1" />
+                      {/* Description: 14px font size, truncate to 2 lines */}
+                      <p className="text-sm text-gray-600 mb-8 flex-grow line-clamp-2">
+                        {relatedDoc.description}
+                      </p>
+                      {/* CTA: 14px font size, font weight 400 */}
+                      <div className="mt-auto">
+                        <span className="flex items-center text-[#9E800D] group-hover:text-[#FECC0E] text-sm font-normal transition-colors">
+                          View details <ArrowRight size={16} className="ml-2" />
                         </span>
                       </div>
                     </div>
