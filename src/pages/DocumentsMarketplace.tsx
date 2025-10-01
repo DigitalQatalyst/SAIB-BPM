@@ -53,13 +53,14 @@ const DocumentsMarketplace = () => {
     // Extract unique values for filters
     const allCategories = ['All', ...new Set(docsArray.map(doc => doc.category))];
     // Limit to 5 categories (plus "All")
-    const mainCategories = ['All', 'Finance', 'Governance', 'Risk', 'Compliance', 'Operations'];
-    const uniqueDepartments = ['All', ...new Set(docsArray.map(doc => doc.department))];
+    const mainCategories = ['All', 'Finance', 'Governance', 'Risk', 'Compliance', 'Operations', 'IT'];
+    // Standardize to 7 departments
+    const standardDepartments = ['All', 'Finance Group', 'Risk & Compliance', 'IT & Operations', 'Personal Banking', 'Corporate Banking', 'Treasury & Investment'];
     const uniqueStatuses = ['All', ...new Set(docsArray.map(doc => doc.status))];
     const uniqueTypes = ['All', ...new Set(docsArray.map(doc => doc.type))];
     const uniqueLanguages = ['All', ...new Set(docsArray.map(doc => doc.language))];
     setCategories(mainCategories);
-    setDepartments(uniqueDepartments);
+    setDepartments(standardDepartments);
     setStatuses(uniqueStatuses);
     setTypes(uniqueTypes);
     setLanguages(uniqueLanguages);
@@ -67,7 +68,8 @@ const DocumentsMarketplace = () => {
   const filteredDocuments = documents.filter(document => {
     const matchesSearch = document.title.toLowerCase().includes(searchQuery.toLowerCase()) || document.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || document.category === selectedCategory;
-    const matchesDepartment = selectedDepartment === 'All' || document.department === selectedDepartment;
+    // Update department filtering logic to handle standardized departments
+    const matchesDepartment = selectedDepartment === 'All' || selectedDepartment === 'Risk & Compliance' && (document.department === 'Risk' || document.department === 'Compliance') || selectedDepartment === 'IT & Operations' && (document.department === 'IT & Operations' || document.department === 'Operations') || selectedDepartment === 'Personal Banking' && (document.department === 'Personal Banking' || document.department === 'Retail Banking') || document.department === selectedDepartment;
     const matchesStatus = selectedStatus === 'All' || document.status === selectedStatus;
     const matchesType = selectedType === 'All' || document.type === selectedType;
     const matchesLanguage = selectedLanguage === 'All' || document.language === selectedLanguage;

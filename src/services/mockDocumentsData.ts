@@ -1371,5 +1371,365 @@ export const documentsData = {
       title: 'mada Card Terms and Conditions',
       type: 'Form'
     }]
+  },
+  32: {
+    id: 32,
+    title: 'Stop Payment Orders',
+    description: 'هذا الإجراء يحدد الخطوات والمتطلبات اللازمة لتنفيذ أوامر إيقاف الدفع للشيكات والحوالات، بما في ذلك الوثائق المطلوبة والموافقات والإطار الزمني للتنفيذ.',
+    category: 'Banking Services',
+    department: 'Personal Banking',
+    lastUpdated: '2023-12-05',
+    version: '2.1',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'Arabic',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'محمد العتيبي',
+    approvedBy: 'رئيس الخدمات المصرفية الشخصية',
+    approvalDate: '2023-11-30',
+    effectiveDate: '2023-12-15',
+    nextReviewDate: '2024-12-14',
+    tags: ['أوامر إيقاف الدفع', 'الشيكات', 'الخدمات المصرفية الشخصية'],
+    sections: [{
+      title: 'الغرض',
+      content: 'يهدف هذا الإجراء إلى تحديد العمليات والخطوات اللازمة لتنفيذ أوامر إيقاف الدفع للشيكات والحوالات بطريقة فعالة وآمنة.'
+    }, {
+      title: 'النطاق',
+      content: 'يطبق هذا الإجراء على جميع طلبات إيقاف الدفع المقدمة من عملاء الخدمات المصرفية الشخصية.'
+    }, {
+      title: 'المسؤوليات',
+      content: 'يتحمل موظفو الفروع وخدمة العملاء مسؤولية تلقي ومعالجة طلبات إيقاف الدفع وفقاً للإجراءات المحددة.'
+    }, {
+      title: 'الإجراءات',
+      content: 'تتضمن الإجراءات تحديد هوية العميل، والتحقق من صحة الطلب، وتسجيل أمر إيقاف الدفع في النظام، وإخطار العميل بالتأكيد.'
+    }, {
+      title: 'الرسوم والمدة الزمنية',
+      content: 'يخضع أمر إيقاف الدفع لرسوم محددة وفقاً لتعرفة البنك، ويظل ساري المفعول لمدة ستة أشهر ما لم يتم تحديد مدة أخرى.'
+    }],
+    relatedDocuments: [{
+      id: 14,
+      title: 'Account opening agreement form',
+      type: 'Form'
+    }, {
+      id: 16,
+      title: 'Business processes and procedures',
+      type: 'Procedure'
+    }],
+    references: ['تعليمات البنك المركزي السعودي بشأن الشيكات', 'دليل سياسات الخدمات المصرفية الشخصية', 'إجراءات مكافحة الاحتيال']
+  },
+  33: {
+    id: 33,
+    title: 'Balance Orders',
+    description: 'This procedure defines the process for setting up, modifying, and executing balance orders, including sweep arrangements, minimum balance maintenance, and automatic transfers between accounts. / هذا الإجراء يحدد عملية إعداد وتعديل وتنفيذ أوامر الرصيد، بما في ذلك ترتيبات التحويل التلقائي، والحفاظ على الحد الأدنى للرصيد، والتحويلات التلقائية بين الحسابات.',
+    category: 'Operations',
+    department: 'IT & Operations',
+    lastUpdated: '2023-11-15',
+    version: '2.5',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'Bilingual',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'Ahmed Al-Zahrani / أحمد الزهراني',
+    approvedBy: 'Head of Operations / رئيس العمليات',
+    approvalDate: '2023-11-10',
+    effectiveDate: '2023-11-20',
+    nextReviewDate: '2024-11-19',
+    tags: ['Balance Orders', 'Sweep Accounts', 'Automatic Transfers', 'أوامر الرصيد', 'التحويل التلقائي'],
+    sections: [{
+      title: 'Purpose / الغرض',
+      content: 'This procedure establishes the process for setting up and managing balance orders to ensure efficient account management and customer satisfaction. / يحدد هذا الإجراء عملية إعداد وإدارة أوامر الرصيد لضمان إدارة فعالة للحسابات ورضا العملاء.'
+    }, {
+      title: 'Scope / النطاق',
+      content: 'This procedure applies to all balance orders set up for retail and corporate customers. / ينطبق هذا الإجراء على جميع أوامر الرصيد المعدة لعملاء الخدمات المصرفية الشخصية والشركات.'
+    }, {
+      title: 'Types of Balance Orders / أنواع أوامر الرصيد',
+      content: 'Balance orders include sweep arrangements, minimum balance maintenance, and scheduled transfers. Each type has specific parameters and execution criteria. / تشمل أوامر الرصيد ترتيبات التحويل التلقائي، والحفاظ على الحد الأدنى للرصيد، والتحويلات المجدولة. لكل نوع معايير وشروط تنفيذ محددة.'
+    }, {
+      title: 'Setup Process / عملية الإعداد',
+      content: 'The setup process includes customer request verification, parameter configuration, approval, and confirmation. All balance orders must be properly documented. / تتضمن عملية الإعداد التحقق من طلب العميل، وتكوين المعايير، والموافقة، والتأكيد. يجب توثيق جميع أوامر الرصيد بشكل صحيح.'
+    }, {
+      title: 'Monitoring and Maintenance / المراقبة والصيانة',
+      content: 'All balance orders must be monitored regularly for proper execution. Any failures or exceptions must be investigated and resolved promptly. / يجب مراقبة جميع أوامر الرصيد بانتظام للتأكد من التنفيذ السليم. يجب التحقيق في أي إخفاقات أو استثناءات وحلها على الفور.'
+    }],
+    relatedDocuments: [{
+      id: 14,
+      title: 'Account opening agreement form',
+      type: 'Form'
+    }, {
+      id: 16,
+      title: 'Business processes and procedures',
+      type: 'Procedure'
+    }],
+    references: ['SAMA Banking Operations Guidelines / إرشادات البنك المركزي السعودي للعمليات المصرفية', 'SAIB Account Management Standards / معايير إدارة الحسابات في البنك السعودي للاستثمار']
+  },
+  34: {
+    id: 34,
+    title: 'Safe Deposit Boxes',
+    description: 'هذا الإجراء يوضح عمليات إدارة خدمة صناديق الأمانات، بما في ذلك تأجير الصناديق، والوصول إليها، والصيانة، والإجراءات في حالات الطوارئ أو عدم دفع الإيجار.',
+    category: 'Banking Services',
+    department: 'Personal Banking',
+    lastUpdated: '2023-10-20',
+    version: '3.0',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'Arabic',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'سارة القحطاني',
+    approvedBy: 'رئيس الخدمات المصرفية الشخصية',
+    approvalDate: '2023-10-15',
+    effectiveDate: '2023-11-01',
+    nextReviewDate: '2024-10-31',
+    tags: ['صناديق الأمانات', 'خدمات الفروع', 'الخدمات المصرفية الشخصية'],
+    sections: [{
+      title: 'الغرض',
+      content: 'يهدف هذا الإجراء إلى تحديد العمليات والمسؤوليات المتعلقة بإدارة خدمة صناديق الأمانات بما يضمن أمن وسلامة ممتلكات العملاء.'
+    }, {
+      title: 'النطاق',
+      content: 'يشمل هذا الإجراء جميع الفروع التي تقدم خدمة صناديق الأمانات وجميع الموظفين المعنيين بإدارتها.'
+    }, {
+      title: 'إجراءات التأجير',
+      content: 'تتضمن إجراءات التأجير التحقق من هوية العميل، وتوقيع عقد الإيجار، وتحصيل الرسوم والتأمين، وتسليم المفاتيح.'
+    }, {
+      title: 'إجراءات الوصول',
+      content: 'تشمل إجراءات الوصول التحقق من هوية العميل، وتسجيل الزيارات، والإشراف على الدخول إلى غرفة الصناديق وفقاً للسياسات الأمنية.'
+    }, {
+      title: 'الإجراءات في حالة عدم دفع الإيجار',
+      content: 'تتضمن الإجراءات في حالة عدم دفع الإيجار إرسال إشعارات للعميل، وإجراءات فتح الصندوق بحضور لجنة مختصة، وتوثيق المحتويات وحفظها.'
+    }],
+    relatedDocuments: [{
+      id: 14,
+      title: 'Account opening agreement form',
+      type: 'Form'
+    }, {
+      id: 16,
+      title: 'Business processes and procedures',
+      type: 'Procedure'
+    }],
+    references: ['تعليمات البنك المركزي السعودي بشأن صناديق الأمانات', 'سياسة الأمن والسلامة في الفروع', 'عقد إيجار صندوق الأمانات']
+  },
+  35: {
+    id: 35,
+    title: 'Safes and Vaults, Keys and Combinations',
+    description: 'This procedure establishes guidelines for managing bank safes and vaults, including key control, combination management, access protocols, and security measures. / هذا الإجراء يضع إرشادات لإدارة خزائن البنك، بما في ذلك التحكم في المفاتيح، وإدارة التركيبات، وبروتوكولات الوصول، وإجراءات الأمان.',
+    category: 'Security',
+    department: 'IT & Operations',
+    lastUpdated: '2023-09-10',
+    version: '3.5',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'Bilingual',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'Khalid Al-Najjar / خالد النجار',
+    approvedBy: 'Head of Operations / رئيس العمليات',
+    approvalDate: '2023-09-05',
+    effectiveDate: '2023-09-15',
+    nextReviewDate: '2024-09-14',
+    tags: ['Security', 'Vaults', 'Keys', 'Access Control', 'الأمن', 'الخزائن', 'المفاتيح', 'التحكم في الوصول'],
+    sections: [{
+      title: 'Purpose / الغرض',
+      content: 'This procedure establishes guidelines for the secure management of bank safes, vaults, keys, and combinations to protect bank assets and customer valuables. / يحدد هذا الإجراء إرشادات للإدارة الآمنة لخزائن البنك ومفاتيحها وتركيباتها لحماية أصول البنك وممتلكات العملاء القيمة.'
+    }, {
+      title: 'Scope / النطاق',
+      content: 'This procedure applies to all bank branches and offices with safes and vaults, and to all personnel responsible for their management. / ينطبق هذا الإجراء على جميع فروع ومكاتب البنك التي تحتوي على خزائن، وعلى جميع الموظفين المسؤولين عن إدارتها.'
+    }, {
+      title: 'Key Control / التحكم في المفاتيح',
+      content: 'All vault and safe keys must be securely stored, logged, and accounted for. Dual control is required for access to master keys. / يجب تخزين جميع مفاتيح الخزائن بشكل آمن وتسجيلها وحسابها. يلزم وجود تحكم مزدوج للوصول إلى المفاتيح الرئيسية.'
+    }, {
+      title: 'Combination Management / إدارة التركيبات',
+      content: 'Vault combinations must be changed whenever a custodian changes and at least annually. Combinations must be stored in sealed envelopes in another secure location. / يجب تغيير تركيبات الخزائن عند تغيير أمين الخزنة وسنوياً على الأقل. يجب تخزين التركيبات في مظاريف مختومة في موقع آمن آخر.'
+    }, {
+      title: 'Emergency Procedures / إجراءات الطوارئ',
+      content: 'In case of emergency, specific procedures must be followed to access vaults or safes, including proper authorization, documentation, and witness requirements. / في حالة الطوارئ، يجب اتباع إجراءات محددة للوصول إلى الخزائن، بما في ذلك التفويض المناسب والتوثيق ومتطلبات الشهود.'
+    }],
+    relatedDocuments: [{
+      id: 5,
+      title: 'Business Continuity Management Policy And Framework',
+      type: 'Policy'
+    }, {
+      id: 34,
+      title: 'Safe Deposit Boxes',
+      type: 'Procedure'
+    }],
+    references: ['SAMA Security Guidelines / إرشادات الأمن للبنك المركزي السعودي', 'Banking Industry Standard Practices for Vault Management / ممارسات معيارية في القطاع المصرفي لإدارة الخزائن', 'SAIB Security Manual / دليل الأمن للبنك السعودي للاستثمار']
+  },
+  36: {
+    id: 36,
+    title: 'Treasury Services - Nostro Transfers',
+    description: 'This procedure outlines the process for managing Nostro account transfers, including initiation, verification, execution, reconciliation, and exception handling.',
+    category: 'Treasury',
+    department: 'Treasury & Investment',
+    lastUpdated: '2023-08-15',
+    version: '2.7',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'English',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'Faisal Al-Otaibi',
+    approvedBy: 'Head of Treasury',
+    approvalDate: '2023-08-10',
+    effectiveDate: '2023-08-25',
+    nextReviewDate: '2024-08-24',
+    tags: ['Treasury', 'Nostro', 'Transfers', 'Correspondent Banking'],
+    sections: [{
+      title: 'Purpose',
+      content: 'This procedure establishes the process for managing transfers through Nostro accounts to ensure accuracy, efficiency, and compliance with regulatory requirements.'
+    }, {
+      title: 'Scope',
+      content: 'This procedure applies to all transfers initiated through Nostro accounts maintained with correspondent banks worldwide.'
+    }, {
+      title: 'Initiation and Authorization',
+      content: 'Nostro transfers must be initiated by authorized personnel and approved according to the authority matrix. All transfers must include proper documentation and justification.'
+    }, {
+      title: 'Execution and Confirmation',
+      content: 'Transfers must be executed through approved channels with proper authentication. Confirmation of execution must be obtained and documented for all transfers.'
+    }, {
+      title: 'Reconciliation and Reporting',
+      content: 'All Nostro accounts must be reconciled daily. Discrepancies must be investigated and resolved promptly. Regular reports must be generated for management review.'
+    }],
+    relatedDocuments: [{
+      id: 25,
+      title: 'Transfer - Draft Application',
+      type: 'Form'
+    }, {
+      id: 26,
+      title: 'Transfer Draft Application – For Non-individual Customers',
+      type: 'Form'
+    }],
+    references: ['SWIFT Guidelines for Nostro Account Management', 'SAMA Foreign Exchange Regulations', 'Basel Committee on Banking Supervision Standards for Correspondent Banking']
+  },
+  37: {
+    id: 37,
+    title: 'Prospecting and Booking New Clients',
+    description: 'This procedure outlines the process for identifying, qualifying, onboarding, and booking new corporate clients, including due diligence requirements, approval workflows, and documentation standards.',
+    category: 'Corporate Banking',
+    department: 'Corporate Banking',
+    lastUpdated: '2023-12-01',
+    version: '2.2',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'English',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'Abdulaziz Al-Sulaiman',
+    approvedBy: 'Head of Corporate Banking',
+    approvalDate: '2023-11-25',
+    effectiveDate: '2023-12-10',
+    nextReviewDate: '2024-12-09',
+    tags: ['Corporate Banking', 'Client Onboarding', 'KYC', 'Due Diligence'],
+    sections: [{
+      title: 'Purpose',
+      content: 'This procedure establishes the process for prospecting, qualifying, and onboarding new corporate clients to ensure a consistent approach that meets regulatory requirements and bank standards.'
+    }, {
+      title: 'Scope',
+      content: 'This procedure applies to all new corporate client acquisitions across all corporate banking segments and industries.'
+    }, {
+      title: 'Client Identification and Qualification',
+      content: "The process begins with identifying potential clients, initial screening, and qualification based on industry, size, financial standing, and strategic fit with the bank's portfolio."
+    }, {
+      title: 'Due Diligence and Documentation',
+      content: 'Comprehensive due diligence must be conducted, including KYC, AML checks, credit assessment, and legal documentation. All required documents must be collected and verified.'
+    }, {
+      title: 'Approval and Onboarding',
+      content: 'New client relationships require appropriate approvals based on the approval matrix. Once approved, the onboarding process includes account setup, service enrollment, and relationship management assignment.'
+    }],
+    relatedDocuments: [{
+      id: 22,
+      title: 'Account Opening Agreement Entities',
+      type: 'Form'
+    }, {
+      id: 6,
+      title: 'Compliance Policy',
+      type: 'Policy'
+    }],
+    references: ['SAMA Corporate Banking Guidelines', 'FATF Recommendations for Customer Due Diligence', 'SAIB Credit Policy Guide', 'Anti-Money Laundering and Counter-Terrorism Financing Regulations']
+  },
+  38: {
+    id: 38,
+    title: 'Internal Capital Adequacy Assessment Plan',
+    description: 'This procedure details the process for conducting the Internal Capital Adequacy Assessment Process (ICAAP), including risk assessment, capital planning, stress testing, and reporting requirements.',
+    category: 'Finance',
+    department: 'Finance Group',
+    lastUpdated: '2023-10-05',
+    version: '3.1',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'English',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'Hassan Al-Harbi',
+    approvedBy: 'Chief Financial Officer',
+    approvalDate: '2023-09-30',
+    effectiveDate: '2023-10-15',
+    nextReviewDate: '2024-10-14',
+    tags: ['ICAAP', 'Capital Planning', 'Risk Assessment', 'Stress Testing'],
+    sections: [{
+      title: 'Purpose',
+      content: 'This procedure establishes the process for conducting the Internal Capital Adequacy Assessment Process (ICAAP) to ensure the bank maintains adequate capital levels relative to its risk profile and strategic objectives.'
+    }, {
+      title: 'Scope',
+      content: 'This procedure applies to all aspects of capital planning and risk assessment across the bank and its subsidiaries.'
+    }, {
+      title: 'Risk Identification and Assessment',
+      content: 'The ICAAP process begins with comprehensive identification and assessment of all material risks, including credit, market, operational, concentration, interest rate, liquidity, and strategic risks.'
+    }, {
+      title: 'Capital Planning and Stress Testing',
+      content: 'Based on risk assessment, capital requirements are calculated under normal and stressed scenarios. Stress testing must consider severe but plausible scenarios to test capital adequacy.'
+    }, {
+      title: 'Reporting and Review',
+      content: 'The ICAAP report must be prepared annually and submitted to the Risk Committee and Board for review and approval before submission to SAMA. The report must include capital adequacy assessment, risk profile, and mitigation strategies.'
+    }],
+    relatedDocuments: [{
+      id: 12,
+      title: 'Internal Capital Adequacy Assessment Plan Policy',
+      type: 'Policy'
+    }, {
+      id: 2,
+      title: 'Annual Profit And Capital Plan Policy',
+      type: 'Policy'
+    }],
+    references: ['SAMA ICAAP Guidelines', 'Basel Committee on Banking Supervision Standards', 'SAIB Risk Appetite Framework', 'Capital Planning and Management Standards']
+  },
+  39: {
+    id: 39,
+    title: 'Entertainment Expenses for Branches',
+    description: 'هذا الإجراء يحدد القواعد والضوابط المتعلقة بمصاريف الضيافة والترفيه في فروع البنك، بما في ذلك الميزانيات المعتمدة، وعمليات الموافقة، ومتطلبات التوثيق، وإجراءات السداد.',
+    category: 'Finance',
+    department: 'Personal Banking',
+    lastUpdated: '2023-11-20',
+    version: '1.5',
+    status: 'Active',
+    type: 'Procedure',
+    language: 'Arabic',
+    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EVw7IOFCvmVChcgN9pBYNUIB-tfRs8EGdJV7Gp2ZE2PwYQ?e=YjM5wz',
+    createdBy: 'عبدالله العمري',
+    approvedBy: 'رئيس الخدمات المصرفية الشخصية',
+    approvalDate: '2023-11-15',
+    effectiveDate: '2023-12-01',
+    nextReviewDate: '2024-11-30',
+    tags: ['مصاريف الضيافة', 'الفروع', 'المصاريف التشغيلية', 'الخدمات المصرفية الشخصية'],
+    sections: [{
+      title: 'الغرض',
+      content: 'يهدف هذا الإجراء إلى تحديد القواعد والضوابط المتعلقة بمصاريف الضيافة والترفيه في فروع البنك لضمان الاستخدام المناسب للموارد والالتزام بالسياسات المالية.'
+    }, {
+      title: 'النطاق',
+      content: 'يطبق هذا الإجراء على جميع مصاريف الضيافة والترفيه في جميع فروع البنك السعودي للاستثمار.'
+    }, {
+      title: 'الميزانيات المعتمدة',
+      content: 'يتم تخصيص ميزانية سنوية لمصاريف الضيافة لكل فرع بناءً على حجم الفرع وعدد العملاء وموقعه الجغرافي. يجب الالتزام بهذه الميزانية وعدم تجاوزها.'
+    }, {
+      title: 'عملية الموافقة',
+      content: 'تتطلب جميع مصاريف الضيافة موافقة مسبقة من مدير الفرع. المصاريف التي تتجاوز حداً معيناً تتطلب موافقة إضافية من المدير الإقليمي أو رئيس قطاع الفروع.'
+    }, {
+      title: 'التوثيق والسداد',
+      content: 'يجب توثيق جميع مصاريف الضيافة بشكل صحيح مع الفواتير الأصلية وبيان الغرض من المصروف وقائمة الحضور. يتم السداد وفقاً لإجراءات المصروفات النثرية أو الدفع المباشر للموردين المعتمدين.'
+    }],
+    relatedDocuments: [{
+      id: 1,
+      title: 'Accounting & Disclosure Policy',
+      type: 'Policy'
+    }, {
+      id: 16,
+      title: 'Business processes and procedures',
+      type: 'Procedure'
+    }],
+    references: ['سياسة المصروفات التشغيلية', 'دليل الصلاحيات المالية', 'إجراءات المصروفات النثرية', 'سياسة المشتريات']
   }
 };
