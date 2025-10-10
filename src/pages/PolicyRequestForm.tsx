@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, AlertCircle, Upload, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Send, AlertCircle, Upload, PlusCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import AcknowledgmentModal from '../components/marketplace/AcknowledgmentModal';
 import { addRequest } from '../services/requestTracking';
 import { useUser } from '../context/UserContext';
+// Define the qualifying question type
+interface QualifyingQuestion {
+  id: string;
+  question: string;
+  checked: boolean;
+}
 const PolicyRequestForm = () => {
   const {
     id
@@ -23,6 +29,40 @@ const PolicyRequestForm = () => {
     justification: '',
     description: ''
   });
+  // Qualifying questions to determine if a request is major or minor
+  const [qualifyingQuestions, setQualifyingQuestions] = useState<QualifyingQuestion[]>([{
+    id: 'multi_dept',
+    question: 'Does this policy impact multiple departments or business units?',
+    checked: false
+  }, {
+    id: 'regulatory',
+    question: 'Is this policy change driven by new regulatory requirements?',
+    checked: false
+  }, {
+    id: 'customer_impact',
+    question: 'Will this policy change directly impact customer-facing processes?',
+    checked: false
+  }, {
+    id: 'risk_profile',
+    question: 'Does this policy significantly alter the risk profile of the organization?',
+    checked: false
+  }, {
+    id: 'governance',
+    question: 'Does this policy change require board or executive committee approval?',
+    checked: false
+  }]);
+  // Determine if request is major based on qualifying questions
+  const [isRequestMajor, setIsRequestMajor] = useState(false);
+  // Update type based on qualifying questions
+  useEffect(() => {
+    const yesCount = qualifyingQuestions.filter(q => q.checked).length;
+    const isMajor = yesCount >= 3;
+    setIsRequestMajor(isMajor);
+    setFormState(prev => ({
+      ...prev,
+      type: isMajor ? 'Major' : 'Minor'
+    }));
+  }, [qualifyingQuestions]);
   // File attachment state
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,6 +80,14 @@ const PolicyRequestForm = () => {
       ...prev,
       [name]: value
     }));
+  };
+  // Handle checkbox changes for qualifying questions
+  const handleQualifyingQuestionChange = (questionId: string) => {
+    const updatedQuestions = qualifyingQuestions.map(q => q.id === questionId ? {
+      ...q,
+      checked: !q.checked
+    } : q);
+    setQualifyingQuestions(updatedQuestions);
   };
   // Handle file uploads
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -166,15 +214,43 @@ const PolicyRequestForm = () => {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                    Type
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Request Type Qualification
                   </label>
-                  <div className="mt-1">
-                    <select id="type" name="type" required value={formState.type} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-3">
-                      <option value="">Select Type</option>
-                      <option value="Minor">Minor</option>
-                      <option value="Major">Major</option>
-                    </select>
+                  <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-4">
+                    <div className="flex">
+                      <HelpCircle className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+                      <p className="text-sm text-blue-700">
+                        Please answer the following questions to help us
+                        determine if your policy request is major or minor.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {qualifyingQuestions.map(question => <div key={question.id} className="relative flex items-start p-3 border border-gray-200 rounded-md hover:border-gray-300 transition-colors">
+                        <div className="flex items-center h-5">
+                          <input id={question.id} type="checkbox" checked={question.checked} onChange={() => handleQualifyingQuestionChange(question.id)} className="h-4 w-4 text-[#FECC0E] border-gray-300 rounded focus:ring-[#FECC0E]" />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <label htmlFor={question.id} className="font-medium text-gray-700">
+                            {question.question}
+                          </label>
+                        </div>
+                      </div>)}
+                  </div>
+                  <div className="mt-4 p-3 border border-gray-200 rounded-md bg-gray-50">
+                    <div className="flex items-center">
+                      {isRequestMajor ? <div className="flex items-center text-amber-700">
+                          <CheckCircle className="h-5 w-5 mr-2 text-amber-600" />
+                          <span className="font-medium">Major Request</span>
+                        </div> : <div className="flex items-center text-green-700">
+                          <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                          <span className="font-medium">Minor Request</span>
+                        </div>}
+                      <span className="ml-2 text-sm text-gray-500">
+                        (Automatically determined based on your answers)
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div>

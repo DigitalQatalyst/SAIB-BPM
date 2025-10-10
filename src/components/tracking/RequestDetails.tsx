@@ -153,10 +153,16 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
         </div>
         {/* Quick Actions for P&P Team */}
         {role === 'pp_team' && !document && request.status === 'Pending' && <div className="bg-gray-50 px-4 py-3 sm:px-6 border-t border-gray-200">
-            <button onClick={handleGenerateDocument} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#FECC0E] hover:bg-[#FECC0E]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-              <FileEdit className="mr-2 h-4 w-4" />
-              Generate Document
-            </button>
+            <div className="flex gap-2">
+              <button onClick={handleGenerateDocument} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#FECC0E] hover:bg-[#FECC0E]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                <FileEdit className="mr-2 h-4 w-4" />
+                Generate Document
+              </button>
+              <a href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EdIIVCTn8nRDg3tSEzmd2MoBLjQ81A0yzDXCZKGGqgBa-g?e=5plPMs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                <div className="mr-2 h-4 w-4" />
+                Use Template
+              </a>
+            </div>
           </div>}
         <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">

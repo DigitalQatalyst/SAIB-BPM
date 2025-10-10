@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Send, Check, RotateCw, Sparkles, FileText, AlertCircle, Upload, FileUp, Download, Globe, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Save, Send, Check, RotateCw, Sparkles, FileText, AlertCircle, Upload, FileUp, Download, Globe, CheckCircle, FilePenLine } from 'lucide-react';
 import { useDocument } from '../context/DocumentContext';
 import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';

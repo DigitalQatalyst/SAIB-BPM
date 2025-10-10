@@ -1,36 +1,17 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle, FileEdit, UserPlus, XCircle, Zap, ExternalLink, MessageSquare, Check } from 'lucide-react';
+import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle, FileEdit, UserPlus, XCircle, Zap, ExternalLink, Check } from 'lucide-react';
 interface ApprovalDetailsProps {
   requestId: number;
   onBackToList: () => void;
-}
-interface Comment {
-  date: string;
-  user: string;
-  text: string;
-  resolved?: boolean;
 }
 const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
   requestId,
   onBackToList
 }) => {
-  const [newComment, setNewComment] = useState('');
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
   const [status, setStatus] = useState('Pending Approval');
-  const [commentRef, setCommentRef] = useState<HTMLTextAreaElement | null>(null);
   // Mock data for the selected request
-  const initialComments = [{
-    date: '2024-03-16 09:30',
-    user: 'Mohammed Al-Qahtani',
-    text: "I've reviewed the SAMA circular and updated the policy. Please review the changes and provide your approval or feedback.",
-    resolved: true
-  }, {
-    date: '2024-03-18 14:15',
-    user: 'Khalid Al-Otaibi',
-    text: 'The changes look good, but please ensure that the incident response timeline requirements in section 4.3 align with the SAMA circular requirements.',
-    resolved: true
-  }];
-  const [comments, setComments] = useState<Comment[]>(initialComments);
   // Current user is Ahmed Al-Rashid
   const currentUser = 'Ahmed Al-Rashid';
   // Initial approvers list with statuses
@@ -121,8 +102,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
       event: 'Approved by Khalid Al-Otaibi',
       user: 'Khalid Al-Otaibi',
       icon: CheckCircle
-    }],
-    comments: comments
+    }]
   };
   if (!request) {
     return <div className="text-center py-12">
@@ -162,27 +142,6 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         return 'bg-gray-100 text-gray-800';
     }
   };
-  const handlePostComment = () => {
-    if (newComment.trim()) {
-      // Create a new comment
-      const newCommentObj = {
-        date: new Date().toLocaleString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: false
-        }).replace(',', ''),
-        user: currentUser,
-        text: newComment.trim()
-      };
-      // Add the comment to the list
-      setComments(prevComments => [...prevComments, newCommentObj]);
-      // Clear the input field
-      setNewComment('');
-    }
-  };
   const handleApprove = () => {
     // Update the status of the current user (Ahmed Al-Rashid) to Approved
     const today = new Date().toISOString().split('T')[0];
@@ -210,10 +169,32 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
     setShowApproveConfirm(false);
     // In a real app, this would make an API call to update the request status
   };
-  const focusOnComment = () => {
-    if (commentRef) {
-      commentRef.focus();
-    }
+  const handleReject = () => {
+    // Update the status of the current user (Ahmed Al-Rashid) to Rejected
+    const today = new Date().toISOString().split('T')[0];
+    const updatedApprovers = approvers.map(approver => approver.name === currentUser ? {
+      ...approver,
+      status: 'Rejected',
+      date: today
+    } : approver);
+    setApprovers(updatedApprovers);
+    // Add to timeline
+    request.timeline.push({
+      date: new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).replace(',', ''),
+      event: `Rejected by ${currentUser}`,
+      user: currentUser,
+      icon: XCircle
+    });
+    setStatus('Rejected');
+    setShowRejectConfirm(false);
+    // In a real app, this would make an API call to update the request status
   };
   return <div>
       <button onClick={onBackToList} className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 mb-4">
@@ -244,9 +225,9 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
                   <CheckCircle size={14} className="mr-1" />
                   Approve
                 </button>
-                <button onClick={focusOnComment} className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                  <MessageCircle size={14} className="mr-1" />
-                  Leave Comment
+                <button onClick={() => setShowRejectConfirm(true)} className="inline-flex items-center px-3 py-1.5 border border-red-600 text-xs font-medium rounded text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                  <XCircle size={14} className="mr-1" />
+                  Reject
                 </button>
               </>}
             <a href={request.documentLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
@@ -327,7 +308,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         <div className="px-4 py-5 sm:px-6">
           <h4 className="text-lg font-medium text-gray-900">Document</h4>
           <p className="mt-1 text-sm text-gray-500">
-            Review the document and provide your approval or feedback
+            Review the document and provide your approval
           </p>
           <div className="mt-4 bg-gray-50 rounded-lg p-4 border border-gray-200">
             <div className="flex items-center justify-between">
@@ -343,9 +324,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
               </a>
             </div>
             <p className="mt-4 text-sm text-gray-500">
-              Click the link above to open the document in Microsoft Word. You
-              can leave comments directly in the document using Word's
-              commenting feature.
+              Click the link above to open the document in Microsoft Word.
             </p>
           </div>
         </div>
@@ -438,53 +417,6 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
           </div>
         </div>
       </div>
-      {/* Comments */}
-      <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:px-6">
-          <h4 className="text-lg font-medium text-gray-900">Comments</h4>
-          <div className="mt-4 space-y-6">
-            {comments.map((comment, index) => <div key={index} className="flex space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="h-6 w-6 text-gray-500" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1 bg-gray-50 rounded-lg p-3">
-                  <div className="flex justify-between">
-                    <p className="text-sm font-medium text-gray-900">
-                      {comment.user}
-                    </p>
-                    <p className="text-sm text-gray-500">{comment.date}</p>
-                  </div>
-                  <p className="text-sm text-gray-500 mt-1">{comment.text}</p>
-                  {comment.resolved && <div className="mt-2 flex items-center text-xs text-green-600">
-                      <Check size={14} className="mr-1" />
-                      <span>Resolved</span>
-                    </div>}
-                </div>
-              </div>)}
-            <div className="mt-6">
-              <div className="flex space-x-3">
-                <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                    <User className="h-6 w-6 text-gray-500" />
-                  </div>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="border border-gray-300 rounded-md shadow-sm overflow-hidden focus-within:border-[#FECC0E] focus-within:ring-0">
-                    <textarea rows={3} name="comment" id="comment" className="block w-full py-3 px-4 border-0 resize-none focus:ring-0 focus:outline-none sm:text-sm" placeholder="Add a comment..." value={newComment} onChange={e => setNewComment(e.target.value)} ref={setCommentRef}></textarea>
-                    <div className="py-2 px-3 bg-gray-50 flex justify-end">
-                      <button onClick={handlePostComment} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#FECC0E] hover:bg-[#FECC0E]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                        Post Comment
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
       {/* Approve Confirmation Modal */}
       {showApproveConfirm && <div className="fixed z-10 inset-0 overflow-y-auto">
           <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -517,6 +449,43 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
                   Approve
                 </button>
                 <button type="button" className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm" onClick={() => setShowApproveConfirm(false)}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>}
+      {/* Reject Confirmation Modal */}
+      {showRejectConfirm && <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={() => setShowRejectConfirm(false)}>
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="sm:flex sm:items-start">
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                  <XCircle className="h-6 w-6 text-red-600" aria-hidden="true" />
+                </div>
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    Reject Document
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Are you sure you want to reject this document? This action
+                      will return the document to the author for revision.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" onClick={handleReject}>
+                  Reject
+                </button>
+                <button type="button" className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm" onClick={() => setShowRejectConfirm(false)}>
                   Cancel
                 </button>
               </div>

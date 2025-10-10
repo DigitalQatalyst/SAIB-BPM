@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, AlertCircle, Info, Upload, PlusCircle } from 'lucide-react';
+import { ArrowLeft, Send, AlertCircle, Info, Upload, PlusCircle, CheckCircle, HelpCircle } from 'lucide-react';
 import AcknowledgmentModal from '../components/marketplace/AcknowledgmentModal';
 import { addRequest } from '../services/requestTracking';
 import { useUser } from '../context/UserContext';
@@ -10,6 +10,12 @@ interface ImpactQuestion {
   question: string;
   checked: boolean;
   assignedStakeholder?: string;
+}
+// Define the qualifying question type
+interface QualifyingQuestion {
+  id: string;
+  question: string;
+  checked: boolean;
 }
 const ServiceRequestForm = () => {
   const {
@@ -29,6 +35,40 @@ const ServiceRequestForm = () => {
     justification: '',
     description: ''
   });
+  // Qualifying questions to determine if a request is major or minor
+  const [qualifyingQuestions, setQualifyingQuestions] = useState<QualifyingQuestion[]>([{
+    id: 'multi_dept',
+    question: 'Does this change impact multiple departments or business units?',
+    checked: false
+  }, {
+    id: 'system_change',
+    question: 'Will this change require significant IT system modifications?',
+    checked: false
+  }, {
+    id: 'regulatory',
+    question: 'Does this change directly impact regulatory compliance or reporting?',
+    checked: false
+  }, {
+    id: 'training',
+    question: 'Will this change require extensive staff training or communication?',
+    checked: false
+  }, {
+    id: 'risk_controls',
+    question: 'Does this change significantly alter existing risk controls or governance?',
+    checked: false
+  }]);
+  // Determine if request is major based on qualifying questions
+  const [isRequestMajor, setIsRequestMajor] = useState(false);
+  // Update type based on qualifying questions
+  useEffect(() => {
+    const yesCount = qualifyingQuestions.filter(q => q.checked).length;
+    const isMajor = yesCount >= 3;
+    setIsRequestMajor(isMajor);
+    setFormState(prev => ({
+      ...prev,
+      type: isMajor ? 'Major' : 'Minor'
+    }));
+  }, [qualifyingQuestions]);
   // File attachment state
   const [files, setFiles] = useState<File[]>([]);
   // Impact questions state
@@ -115,6 +155,14 @@ const ServiceRequestForm = () => {
   // Remove a file from the list
   const removeFile = (index: number) => {
     setFiles(files.filter((_, i) => i !== index));
+  };
+  // Handle checkbox changes for qualifying questions
+  const handleQualifyingQuestionChange = (questionId: string) => {
+    const updatedQuestions = qualifyingQuestions.map(q => q.id === questionId ? {
+      ...q,
+      checked: !q.checked
+    } : q);
+    setQualifyingQuestions(updatedQuestions);
   };
   // Handle checkbox changes for impact questions
   const handleImpactQuestionChange = (questionId: string) => {
@@ -245,15 +293,43 @@ const ServiceRequestForm = () => {
                   </div>
                 </div>
                 <div>
-                  <label htmlFor="type" className="block text-sm font-medium text-gray-700">
-                    Type
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Request Type Qualification
                   </label>
-                  <div className="mt-1">
-                    <select id="type" name="type" required value={formState.type} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-3">
-                      <option value="">Select Type</option>
-                      <option value="Minor">Minor</option>
-                      <option value="Major">Major</option>
-                    </select>
+                  <div className="bg-blue-50 border border-blue-100 rounded-md p-4 mb-4">
+                    <div className="flex">
+                      <HelpCircle className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0" />
+                      <p className="text-sm text-blue-700">
+                        Please answer the following questions to help us
+                        determine if your request is major or minor.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    {qualifyingQuestions.map(question => <div key={question.id} className="relative flex items-start p-3 border border-gray-200 rounded-md hover:border-gray-300 transition-colors">
+                        <div className="flex items-center h-5">
+                          <input id={question.id} type="checkbox" checked={question.checked} onChange={() => handleQualifyingQuestionChange(question.id)} className="h-4 w-4 text-[#FECC0E] border-gray-300 rounded focus:ring-[#FECC0E]" />
+                        </div>
+                        <div className="ml-3 text-sm">
+                          <label htmlFor={question.id} className="font-medium text-gray-700">
+                            {question.question}
+                          </label>
+                        </div>
+                      </div>)}
+                  </div>
+                  <div className="mt-4 p-3 border border-gray-200 rounded-md bg-gray-50">
+                    <div className="flex items-center">
+                      {isRequestMajor ? <div className="flex items-center text-amber-700">
+                          <CheckCircle className="h-5 w-5 mr-2 text-amber-600" />
+                          <span className="font-medium">Major Request</span>
+                        </div> : <div className="flex items-center text-green-700">
+                          <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                          <span className="font-medium">Minor Request</span>
+                        </div>}
+                      <span className="ml-2 text-sm text-gray-500">
+                        (Automatically determined based on your answers)
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div>

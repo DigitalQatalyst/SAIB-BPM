@@ -314,10 +314,16 @@ const PPRequestDetails: React.FC<PPRequestDetailsProps> = ({
                   <XCircle size={14} className="mr-1" />
                   Reject Request
                 </button>
-                <button onClick={() => handleQuickAction('generate')} className="inline-flex items-center px-3 py-1.5 border border-indigo-600 text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                  <FilePenLine size={14} className="mr-1" />
-                  Generate Document in AI DocWriter
-                </button>
+                <div className="flex gap-2">
+                  <button onClick={() => handleQuickAction('generate')} className="inline-flex items-center px-3 py-1.5 border border-indigo-600 text-xs font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <FilePenLine size={14} className="mr-1" />
+                    Generate Document in AI DocWriter
+                  </button>
+                  <button onClick={() => setShowWordEditor(true)} className="inline-flex items-center px-4 py-2 border border-gray-600 text-sm font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    <FileText size={14} className="mr-1" />
+                    Use Template
+                  </button>
+                </div>
               </>}
             {isInReview && document && <a href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/ERQyAc0e_RdFmotNyopxxI0BOV5Wq3HCrZ6lwsEIgU9Nrw?e=WwJYum" target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50">
                 <ExternalLink size={14} className="mr-1" />
