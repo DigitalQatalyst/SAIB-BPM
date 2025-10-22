@@ -21,16 +21,27 @@ const RequestTable: React.FC<RequestTableProps> = ({
   // Load requests from storage based on user role
   useEffect(() => {
     const loadRequests = () => {
+      console.log('Loading requests for role:', role, 'name:', name);
       const filteredRequests = getRequestsByRole(role, name);
+      console.log('Filtered requests:', filteredRequests);
       setRequests(filteredRequests);
     };
+
+    // Initial load
     loadRequests();
-    // Set up event listener for storage changes
-    window.addEventListener('storage', loadRequests);
-    return () => {
-      window.removeEventListener('storage', loadRequests);
+
+    // Set up event listener for custom requestsUpdated event
+    const handleRequestsUpdate = () => {
+      console.log('requestsUpdated event received');
+      loadRequests();
     };
-  }, [role, name]);
+
+    window.addEventListener('requestsUpdated', handleRequestsUpdate);
+
+    return () => {
+      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+    };
+  }, [role, name]); // Re-run when role or name changes
   const handleSort = (field: keyof RequestItem) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');

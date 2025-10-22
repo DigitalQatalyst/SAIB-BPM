@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp, MoreHorizontal } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
+import { getRequestsByRole, RequestItem } from '../../services/requestTracking';
 interface RequestTableProps {
   onRequestSelect: (id: number) => void;
 }
@@ -8,17 +9,45 @@ const RequestTable: React.FC<RequestTableProps> = ({
   onRequestSelect
 }) => {
   const {
+    role,
     name
   } = useUser();
+  const [requests, setRequests] = useState<RequestItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [typeFilter, setTypeFilter] = useState('All');
-  const [sortField, setSortField] = useState('dateCreated');
+  const [sortField, setSortField] = useState<keyof RequestItem>('dateCreated');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [viewMode, setViewMode] = useState<'my-requests' | 'all-requests'>('my-requests');
-  // Mock data - in a real app this would come from an API
-  const requests = [{
+
+  // Load requests from localStorage
+  useEffect(() => {
+    const loadRequests = () => {
+      console.log('Management RequestTable: Loading requests for role:', role, 'name:', name);
+      const allRequests = getRequestsByRole(role, name);
+      console.log('Management RequestTable: Loaded requests:', allRequests);
+      setRequests(allRequests);
+    };
+
+    // Initial load
+    loadRequests();
+
+    // Set up event listener for custom requestsUpdated event
+    const handleRequestsUpdate = () => {
+      console.log('Management RequestTable: requestsUpdated event received');
+      loadRequests();
+    };
+
+    window.addEventListener('requestsUpdated', handleRequestsUpdate);
+
+    return () => {
+      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+    };
+  }, [role, name]);
+
+  // Remove all mock data - replaced with localStorage integration
+  /* const requests = [{
     id: 1,
     ticketNumber: 'REQ-2023-042',
     dateCreated: '2023-09-15',
@@ -102,8 +131,9 @@ const RequestTable: React.FC<RequestTableProps> = ({
     priority: 'High',
     status: 'Needs Revision',
     assignedTo: 'Khalid Al-Otaibi'
-  }];
-  const handleSort = (field: string) => {
+  }]; */
+
+  const handleSort = (field: keyof RequestItem) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -112,10 +142,14 @@ const RequestTable: React.FC<RequestTableProps> = ({
     }
   };
   // First filter by view mode (my requests vs all requests)
-  const viewFilteredRequests = viewMode === 'my-requests' ? requests.filter(request => request.assignedTo === 'Khalid Al-Otaibi') : requests;
+  const viewFilteredRequests = viewMode === 'my-requests' ? requests.filter(request => request.assignedTo === name) : requests;
   // Then apply other filters
   const filteredRequests = viewFilteredRequests.filter(request => {
-    const matchesSearch = request.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase()) || request.requestDetail.toLowerCase().includes(searchQuery.toLowerCase()) || request.requester.toLowerCase().includes(searchQuery.toLowerCase()) || request.department.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      request.ticketNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.requestDetail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (request.requester && request.requester.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (request.department && request.department.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = statusFilter === 'All' || request.status === statusFilter;
     const matchesPriority = priorityFilter === 'All' || request.priority === priorityFilter;
     const matchesType = typeFilter === 'All' || request.requestType === typeFilter;
@@ -288,9 +322,9 @@ const RequestTable: React.FC<RequestTableProps> = ({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div>
-                        <div className="font-medium">{request.requester}</div>
+                        <div className="font-medium">{request.requester || 'Unknown'}</div>
                         <div className="text-xs text-gray-400">
-                          {request.department}
+                          {request.department || 'Not specified'}
                         </div>
                       </div>
                     </td>

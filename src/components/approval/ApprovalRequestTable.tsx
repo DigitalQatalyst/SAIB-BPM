@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp, FileText, ExternalLink } from 'lucide-react';
+import { getRequestsByRole, RequestItem } from '../../services/requestTracking';
+import { useUser } from '../../context/UserContext';
+
 interface ApprovalRequest {
   id: number;
   title: string;
@@ -24,103 +27,61 @@ interface ApprovalRequestTableProps {
 const ApprovalRequestTable: React.FC<ApprovalRequestTableProps> = ({
   onRequestSelect
 }) => {
+  const { role, name } = useUser();
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [priorityFilter, setPriorityFilter] = useState('All');
   const [sortField, setSortField] = useState<keyof ApprovalRequest>('submittedDate');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  // Load mock requests
+
+  // Load requests from localStorage
   useEffect(() => {
-    // Mock data for approval requests
-    const approvalRequests = [{
-      id: 1001,
-      ticketNumber: 'REQ-2024-001',
-      title: 'Information Security Policy Update',
-      requestor: 'Khalid Al-Otaibi',
-      requester: 'Khalid Al-Otaibi',
-      department: 'Policies & Procedures',
-      type: 'Policy',
-      status: 'Pending Approval',
-      priority: 'High',
-      submittedDate: '2024-03-15',
-      dateCreated: '2024-03-15',
-      dueDate: '2024-03-30',
-      serviceName: 'Policy Update',
-      description: 'Updated Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.',
-      documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf',
-      comments: []
-    }, {
-      id: 1002,
-      ticketNumber: 'REQ-2024-002',
-      title: 'Anti-Money Laundering Procedure',
-      requestor: 'Fatima Al-Zahrani',
-      requester: 'Fatima Al-Zahrani',
-      department: 'Compliance',
-      type: 'Procedure',
-      status: 'Pending Approval',
-      priority: 'Medium',
-      submittedDate: '2024-03-12',
-      dateCreated: '2024-03-12',
-      dueDate: '2024-03-27',
-      serviceName: 'Procedure Update',
-      description: 'Updated AML procedure to reflect recent regulatory changes and enhance customer due diligence process.',
-      documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf',
-      comments: []
-    }, {
-      id: 1003,
-      ticketNumber: 'REQ-2024-003',
-      title: 'Customer Complaint Handling Form',
-      requestor: 'Mohammed Al-Ghamdi',
-      requester: 'Mohammed Al-Ghamdi',
-      department: 'Customer Service',
-      type: 'Form',
-      status: 'Pending Approval',
-      priority: 'Low',
-      submittedDate: '2024-03-10',
-      dateCreated: '2024-03-10',
-      dueDate: '2024-03-25',
-      serviceName: 'Form Creation',
-      description: 'New customer complaint handling form designed to improve documentation and tracking of customer issues.',
-      documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf',
-      comments: []
-    }, {
-      id: 1004,
-      ticketNumber: 'REQ-2024-004',
-      title: 'Credit Card Issuance Policy',
-      requestor: 'Sara Al-Malik',
-      requester: 'Sara Al-Malik',
-      department: 'Cards Department',
-      type: 'Policy',
-      status: 'Pending Approval',
-      priority: 'Medium',
-      submittedDate: '2024-03-08',
-      dateCreated: '2024-03-08',
-      dueDate: '2024-03-23',
-      serviceName: 'Policy Update',
-      description: 'Updated credit card issuance policy to incorporate new risk assessment criteria and approval workflows.',
-      documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf',
-      comments: []
-    }, {
-      id: 1005,
-      ticketNumber: 'REQ-2024-005',
-      title: 'Business Continuity Plan Update',
-      requestor: 'Ahmed Al-Rashid',
-      requester: 'Ahmed Al-Rashid',
-      department: 'Risk Management',
-      type: 'Procedure',
-      status: 'Pending Approval',
-      priority: 'High',
-      submittedDate: '2024-03-05',
-      dateCreated: '2024-03-05',
-      dueDate: '2024-03-20',
-      serviceName: 'Procedure Update',
-      description: 'Updated business continuity plan to address pandemic scenarios and remote work arrangements.',
-      documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf',
-      comments: []
-    }];
-    setRequests(approvalRequests);
-  }, []);
+    const loadRequests = () => {
+      console.log('ApprovalRequestTable: Loading requests for role:', role, 'name:', name);
+      const requestItems: RequestItem[] = getRequestsByRole(role, name);
+      console.log('ApprovalRequestTable: Filtered requests:', requestItems);
+
+      // Map RequestItem to ApprovalRequest format
+      const approvalRequests: ApprovalRequest[] = requestItems.map((req) => ({
+        id: req.id,
+        ticketNumber: req.ticketNumber,
+        title: req.requestDetail,
+        requestor: req.requester || 'Unknown',
+        requester: req.requester,
+        department: req.department || 'Not specified',
+        type: req.requestType,
+        status: req.status === 'Pending' ? 'Pending Approval' : req.status,
+        priority: req.priority,
+        submittedDate: req.dateCreated,
+        dateCreated: req.dateCreated,
+        dueDate: req.slaTargetDate,
+        serviceName: req.serviceName,
+        description: req.fullDescription || req.latestNote,
+        documentLink: req.documentId
+          ? `https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf`
+          : '',
+        comments: req.approverComments?.map((c) => c.comment) || [],
+      }));
+
+      setRequests(approvalRequests);
+    };
+
+    // Initial load
+    loadRequests();
+
+    // Set up event listener for custom requestsUpdated event
+    const handleRequestsUpdate = () => {
+      console.log('ApprovalRequestTable: requestsUpdated event received');
+      loadRequests();
+    };
+
+    window.addEventListener('requestsUpdated', handleRequestsUpdate);
+
+    return () => {
+      window.removeEventListener('requestsUpdated', handleRequestsUpdate);
+    };
+  }, [role, name]); // Re-run when role or name changes
   const handleSort = (field: keyof ApprovalRequest) => {
     if (sortField === field) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -146,7 +107,11 @@ const ApprovalRequestTable: React.FC<ApprovalRequestTableProps> = ({
   });
   const getStatusColor = (status: string) => {
     switch (status) {
+      case 'Pending':
+        return 'bg-yellow-100 text-yellow-800';
       case 'Pending Approval':
+        return 'bg-blue-100 text-blue-800';
+      case 'In Progress':
         return 'bg-blue-100 text-blue-800';
       case 'Approved':
         return 'bg-green-100 text-green-800';
@@ -154,6 +119,8 @@ const ApprovalRequestTable: React.FC<ApprovalRequestTableProps> = ({
         return 'bg-red-100 text-red-800';
       case 'Changes Requested':
         return 'bg-orange-100 text-orange-800';
+      case 'Completed':
+        return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -171,10 +138,13 @@ const ApprovalRequestTable: React.FC<ApprovalRequestTableProps> = ({
             <div className="relative">
               <select className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-[#FECC0E] focus:border-[#FECC0E] sm:text-sm rounded-md" value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
                 <option value="All">All Status</option>
+                <option value="Pending">Pending</option>
                 <option value="Pending Approval">Pending Approval</option>
+                <option value="In Progress">In Progress</option>
                 <option value="Approved">Approved</option>
                 <option value="Rejected">Rejected</option>
                 <option value="Changes Requested">Changes Requested</option>
+                <option value="Completed">Completed</option>
               </select>
             </div>
             <div className="relative">
@@ -260,7 +230,7 @@ const ApprovalRequestTable: React.FC<ApprovalRequestTableProps> = ({
                   onRequestSelect(request.id);
                 }}>
                         <FileText className="h-4 w-4 mr-1" />
-                        View Document
+                        View Details
                       </button>
                     </td>
                   </tr>) : <tr>

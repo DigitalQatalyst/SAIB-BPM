@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle, FileEdit, ExternalLink, Download } from 'lucide-react';
-import { getRequestById, RequestItem, addApproverComment, getDocumentByRequestId } from '../../services/requestTracking';
+import { getRequestById, RequestItem, addApproverComment, getDocumentByRequestId, submitForApproval, approveRequest, requestChanges, rejectRequest, completeRequest } from '../../services/requestTracking';
 import { useUser } from '../../context/UserContext';
 import { useDocument } from '../../context/DocumentContext';
 interface RequestDetailsProps {
@@ -96,26 +96,30 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
         title: request.requestDetail,
         content: `# ${request.requestDetail}\n\n## Purpose\nThis document outlines the policy for ${request.requestDetail.toLowerCase()}.\n\n## Scope\nThis policy applies to all employees, contractors, and third parties who have access to the bank's systems and information.\n\n## Policy\n1. All employees must comply with this policy.\n2. Violations may result in disciplinary action.\n3. This policy is subject to annual review.`
       });
+
+      // Update request status to "In Progress" with "In Review" approval status
+      submitForApproval(requestId, newDoc.id);
+
       setDocument(newDoc);
-      // Trigger storage event
-      window.dispatchEvent(new Event('storage'));
+      // Event is already dispatched by submitForApproval via updateRequest
     }
   };
   const handlePostComment = () => {
     if (newComment.trim()) {
       if (role === 'approver' && request.documentId) {
-        // Add comment as approver
+        // Handle approver actions using new workflow functions
         if (commentType === 'approve') {
-          // Approve the document
+          // Approve the request
           approveDocument(request.documentId, 1);
-          addApproverComment(requestId, name, `Approved: ${newComment}`, true);
+          approveRequest(requestId, name, newComment);
         } else if (commentType === 'reject') {
+          // Reject the request
+          requestRevision(request.documentId, newComment, 1);
+          rejectRequest(requestId, name, newComment);
+        } else {
           // Request changes
           requestRevision(request.documentId, newComment, 1);
-          addApproverComment(requestId, name, `Requested changes: ${newComment}`, false);
-        } else {
-          // Just a comment
-          addApproverComment(requestId, name, newComment);
+          requestChanges(requestId, name, newComment);
         }
       } else {
         // Regular comment
@@ -123,9 +127,18 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
       }
       setNewComment('');
       setCommentType('comment');
-      // Refresh the request data
-      const updatedRequest = getRequestById(requestId);
-      setRequest(updatedRequest);
+      // UI will auto-refresh via requestsUpdated event listener
+    }
+  };
+
+  // Handler for completing/publishing a request (P&P Team)
+  const handlePublishDocument = () => {
+    if (role === 'pp_team' && request.status === 'Approved' && document) {
+      // Publish the document
+      publishDocument(document.id);
+      // Complete the request
+      completeRequest(requestId);
+      // UI will auto-refresh via requestsUpdated event
     }
   };
   // Comments from approvers
@@ -162,6 +175,23 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
                 <div className="mr-2 h-4 w-4" />
                 Use Template
               </a>
+            </div>
+          </div>}
+        {/* Publish Action for P&P Team when Approved */}
+        {role === 'pp_team' && request.status === 'Approved' && document && <div className="bg-green-50 px-4 py-3 sm:px-6 border-t border-green-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-800">
+                  This request has been approved and is ready for publication.
+                </p>
+                <p className="text-xs text-green-600 mt-1">
+                  Click "Publish & Complete" to finalize and publish the document.
+                </p>
+              </div>
+              <button onClick={handlePublishDocument} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                <CheckCircle className="mr-2 h-4 w-4" />
+                Publish & Complete
+              </button>
             </div>
           </div>}
         <div className="border-t border-gray-200 px-4 py-5 sm:px-6">

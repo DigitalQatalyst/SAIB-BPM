@@ -15,6 +15,9 @@ const AcknowledgmentModal: React.FC<AcknowledgmentModalProps> = ({
   if (!isOpen) return null;
   const handleClose = () => {
     onClose();
+    // Trigger event before navigation to ensure fresh data
+    console.log('AcknowledgmentModal: Dispatching requestsUpdated event before navigation');
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
     // Navigate to track requests page
     navigate('/track-requests');
   };

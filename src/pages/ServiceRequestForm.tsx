@@ -24,9 +24,7 @@ const ServiceRequestForm = () => {
     id: string;
   }>();
   const navigate = useNavigate();
-  const {
-    user
-  } = useUser();
+  const user = useUser();
   // Form state
   const [formState, setFormState] = useState({
     title: '',
@@ -193,18 +191,25 @@ const ServiceRequestForm = () => {
         priority: formState.type === 'Major' ? 'High' : 'Medium',
         latestNote: 'Request submitted by user',
         fullDescription: `${formState.justification}\n\n${formState.description}${impactDetails}${stakeholderDetails}`,
-        requester: user?.name || 'Anonymous User',
-        requesterEmail: user?.email || 'user@example.com',
-        department: user?.department || 'Not specified'
+        requester: user.name || 'Anonymous User',
+        requesterEmail: user.email || 'user@example.com',
+        department: user.department || 'Not specified'
       };
       // Add the request to localStorage
       const savedRequest = addRequest(newRequest);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+
       // Set the request number from the generated request
       setRequestNumber(savedRequest.ticketNumber);
-      // Trigger storage event to update other components
-      window.dispatchEvent(new Event('storage'));
+
+      // Trigger custom event to update other components (with small delay)
+      setTimeout(() => {
+        console.log('Dispatching requestsUpdated event');
+        window.dispatchEvent(new CustomEvent('requestsUpdated'));
+      }, 0);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       // Open the acknowledgment modal
       setIsModalOpen(true);
     } catch (err) {

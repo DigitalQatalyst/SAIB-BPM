@@ -272,17 +272,47 @@ export const getRequests = (): RequestItem[] => {
 // Get requests filtered by user role
 export const getRequestsByRole = (role: string, userName: string): RequestItem[] => {
   const requests = getRequests();
+
+  console.log('===== getRequestsByRole DEBUG =====');
+  console.log('Role:', role);
+  console.log('UserName:', userName);
+  console.log('Total requests in storage:', requests.length);
+  console.log('All requests:', requests);
+
+  let result: RequestItem[];
+
   switch (role) {
     case 'user':
       // Regular users only see their own requests
-      return requests.filter(req => req.requester === userName);
+      result = requests.filter(req => {
+        const matches = req.requester === userName;
+        console.log(`Checking request ${req.ticketNumber}: requester="${req.requester}" === userName="${userName}" ? ${matches}`);
+        return matches;
+      });
+      console.log(`Filtered for user "${userName}":`, result);
+      return result;
+
     case 'pp_team':
       // P&P team members see all requests, with their assigned ones first
-      return [...requests.filter(req => req.assignedTo === userName), ...requests.filter(req => req.assignedTo !== userName)];
+      result = [...requests.filter(req => req.assignedTo === userName), ...requests.filter(req => req.assignedTo !== userName)];
+      console.log(`Filtered for pp_team "${userName}":`, result);
+      return result;
+
     case 'approver':
-      // Approvers see requests that have documents generated and need approval
-      return requests.filter(req => (req.status === 'In Progress' || req.status === 'Approved') && req.documentId && (req.approvalStatus === 'In Review' || !req.approvalStatus));
+      // Approvers see requests that have been worked on by P&P team
+      // (i.e., have documents generated OR are in approval workflow)
+      result = requests.filter(req =>
+        req.documentId ||
+        req.status === 'In Progress' ||
+        req.status === 'Approved' ||
+        req.approvalStatus === 'In Review' ||
+        req.approvalStatus === 'Changes Requested'
+      );
+      console.log(`Filtered for approver:`, result);
+      return result;
+
     default:
+      console.log(`Unknown role "${role}", returning all requests:`, requests);
       return requests;
   }
 };
@@ -327,8 +357,17 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
       approverComments: [],
       ...request
     };
+
+    console.log('addRequest: Creating new request:', newRequest);
+    console.log('addRequest: Current requests before adding:', requests);
+
     // Save to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify([...requests, newRequest]));
+    const allRequests = [...requests, newRequest];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(allRequests));
+
+    console.log('addRequest: Saved to localStorage. Total requests now:', allRequests.length);
+    console.log('addRequest: All requests:', allRequests);
+
     return newRequest;
   } catch (error) {
     console.error('Error adding request to localStorage:', error);
@@ -352,6 +391,11 @@ export const updateRequest = (id: number, updates: Partial<RequestItem>): Reques
     };
     requests[index] = updatedRequest;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+
+    // Dispatch event to update UI across all views
+    window.dispatchEvent(new CustomEvent('requestsUpdated'));
+    console.log('updateRequest: Request updated, event dispatched for request:', id);
+
     return updatedRequest;
   } catch (error) {
     console.error('Error updating request in localStorage:', error);
@@ -397,6 +441,95 @@ export const completeRequest = (requestId: number): RequestItem | undefined => {
     latestNote: 'Document published and request completed'
   });
 };
+
+// ========== Workflow Helper Functions ==========
+
+// Start work on a request (P&P Team assigns themselves)
+export const startWorkOnRequest = (requestId: number, assignedTo: string): RequestItem | undefined => {
+  console.log(`startWorkOnRequest: Starting work on request ${requestId}, assigned to ${assignedTo}`);
+  return updateRequest(requestId, {
+    status: 'In Progress',
+    assignedTo,
+    latestNote: `Assigned to ${assignedTo} - work started`
+  });
+};
+
+// Submit document for approval (P&P Team generates document)
+export const submitForApproval = (requestId: number, documentId: string): RequestItem | undefined => {
+  console.log(`submitForApproval: Submitting request ${requestId} for approval with document ${documentId}`);
+  return updateRequest(requestId, {
+    documentId,
+    status: 'In Progress',
+    approvalStatus: 'In Review',
+    latestNote: 'Document generated and submitted for approval'
+  });
+};
+
+// Approve a request (Approver approves)
+export const approveRequest = (requestId: number, approver: string, comment?: string): RequestItem | undefined => {
+  console.log(`approveRequest: Approving request ${requestId} by ${approver}`);
+  const request = getRequestById(requestId);
+  if (!request) return undefined;
+
+  const newComment = comment ? {
+    approver,
+    comment,
+    date: new Date().toISOString().split('T')[0]
+  } : null;
+
+  const approverComments = request.approverComments || [];
+
+  return updateRequest(requestId, {
+    approverComments: newComment ? [...approverComments, newComment] : approverComments,
+    approvalStatus: 'Approved',
+    status: 'Approved',
+    latestNote: `Approved by ${approver}`
+  });
+};
+
+// Request changes (Approver requests revision)
+export const requestChanges = (requestId: number, approver: string, comment: string): RequestItem | undefined => {
+  console.log(`requestChanges: Requesting changes for request ${requestId} by ${approver}`);
+  const request = getRequestById(requestId);
+  if (!request) return undefined;
+
+  const newComment = {
+    approver,
+    comment,
+    date: new Date().toISOString().split('T')[0]
+  };
+
+  const approverComments = request.approverComments || [];
+
+  return updateRequest(requestId, {
+    approverComments: [...approverComments, newComment],
+    approvalStatus: 'Changes Requested',
+    status: 'In Progress', // Back to In Progress for P&P team to revise
+    latestNote: `Changes requested by ${approver}`
+  });
+};
+
+// Reject a request (Approver rejects)
+export const rejectRequest = (requestId: number, approver: string, comment: string): RequestItem | undefined => {
+  console.log(`rejectRequest: Rejecting request ${requestId} by ${approver}`);
+  const request = getRequestById(requestId);
+  if (!request) return undefined;
+
+  const newComment = {
+    approver,
+    comment,
+    date: new Date().toISOString().split('T')[0]
+  };
+
+  const approverComments = request.approverComments || [];
+
+  return updateRequest(requestId, {
+    approverComments: [...approverComments, newComment],
+    status: 'Rejected',
+    latestNote: `Rejected by ${approver}`
+  });
+};
+
 // Delete a request
 export const deleteRequest = (id: number): boolean => {
   try {
