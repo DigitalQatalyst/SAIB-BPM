@@ -38,6 +38,7 @@ import DocWriter from './pages/DocWriter';
 import TemplatesMarketplace from './pages/TemplatesMarketplace';
 import TemplateDetails from './pages/TemplateDetails';
 import SharedDocument from './pages/SharedDocument';
+import ProcessModelCreator from './pages/ProcessModelCreator';
 const AppContent = () => {
   const location = useLocation();
   const {
@@ -45,7 +46,7 @@ const AppContent = () => {
   } = useUser();
   const isLandingPage = location.pathname === '/';
   const isSharedDocPage = location.pathname.startsWith('/shared/');
-  const showSidebar = ['/track-requests', '/manage-requests', '/approval-requests', '/resource-center', '/support', '/feedback', '/notifications', '/settings', '/docwriter', '/template', '/team', '/favorites'].some(path => location.pathname.startsWith(path));
+  const showSidebar = ['/track-requests', '/manage-requests', '/approval-requests', '/resource-center', '/support', '/feedback', '/notifications', '/settings', '/docwriter', '/template', '/team', '/favorites', '/process-model-creator'].some(path => location.pathname.startsWith(path));
   return <div className="flex flex-col min-h-screen font-['Poppins']">
       {isLandingPage ? <Navbar /> : !isSharedDocPage && <NavbarSecondary />}
       {showSidebar && <Sidebar />}
@@ -73,6 +74,7 @@ const AppContent = () => {
           <Route path="/docwriter/create/:templateId" element={<DocWriter />} />
           <Route path="/docwriter/:requestId" element={<DocWriter />} />
           <Route path="/shared/:shareId" element={<SharedDocument />} />
+          <Route path="/process-model-creator" element={<ProcessModelCreator />} />
           <Route path="/resource-center" element={<ResourceCenter />} />
           <Route path="/support" element={<Support />} />
           <Route path="/feedback" element={<Feedback />} />

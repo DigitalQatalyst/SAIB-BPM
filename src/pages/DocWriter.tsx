@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Send, Check, RotateCw, Sparkles, FileText, AlertCircle, Upload, FileUp, Download, Globe, CheckCircle, FilePenLine } from 'lucide-react';
+import { ArrowLeft, Save, Send, Check, RotateCw, Sparkles, FileText, AlertCircle, Upload, FileUp, Download, Globe, CheckCircle, FilePenLine, Network } from 'lucide-react';
 import { useDocument } from '../context/DocumentContext';
 import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
@@ -637,6 +637,10 @@ Please format the document using Markdown syntax.
                       </p>
                     </div>
                     <div className="flex space-x-3">
+                      <button type="button" onClick={() => navigate('/process-model-creator')} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                        <Network className="-ml-0.5 mr-2 h-4 w-4" />
+                        Create Process Model
+                      </button>
                       <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
                         <Save className="-ml-0.5 mr-2 h-4 w-4" />
                         Save Draft
@@ -720,6 +724,10 @@ Please format the document using Markdown syntax.
                         Back to Form
                       </button>
                       <div className="flex space-x-3">
+                        <button type="button" onClick={() => navigate('/process-model-creator')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                          <Network className="-ml-1 mr-2 h-5 w-5" />
+                          Create Process Model
+                        </button>
                         <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
                           <Save className="-ml-1 mr-2 h-5 w-5" />
                           Save Draft
