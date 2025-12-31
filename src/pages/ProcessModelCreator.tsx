@@ -1,4 +1,4 @@
-import React, { useCallback, useState, DragEvent } from 'react';
+import React, { useCallback, useState, DragEvent, useEffect } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -14,10 +14,17 @@ import {
   NodeTypes,
   useReactFlow,
   ReactFlowProvider,
+  getNodesBounds,
+  getViewportForBounds,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ArrowLeft, Save, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Save, Download, Upload, ChevronDown, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toPng, toJpeg } from 'html-to-image';
+import jsPDF from 'jspdf';
+import { useUser } from '../context/UserContext';
+import { addRequest, submitForApproval } from '../services/requestTracking';
+import { v4 as uuidv4 } from 'uuid';
 import StartEventNode from '../components/processModel/nodes/StartEventNode';
 import EndEventNode from '../components/processModel/nodes/EndEventNode';
 import TaskNode from '../components/processModel/nodes/TaskNode';
@@ -47,7 +54,10 @@ let nodeId = 2;
 
 const FlowCanvas = () => {
   const navigate = useNavigate();
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, getNodes } = useReactFlow();
+  const { userName, userEmail } = useUser();
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const [processName, setProcessName] = useState('');
 
   const updateNodeLabel = useCallback(
     (nodeId: string, newLabel: string) => {
@@ -70,6 +80,18 @@ const FlowCanvas = () => {
   );
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
+  // Close export menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showExportMenu && !(event.target as Element).closest('.export-dropdown')) {
+        setShowExportMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showExportMenu]);
+
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
@@ -77,14 +99,14 @@ const FlowCanvas = () => {
 
   const onNodesDelete = useCallback(
     (deleted: Node[]) => {
-      console.log('Deleted nodes:', deleted);
+      // Nodes successfully deleted
     },
     []
   );
 
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
-      console.log('Deleted edges:', deleted);
+      // Edges successfully deleted
     },
     []
   );
@@ -148,6 +170,219 @@ const FlowCanvas = () => {
     linkElement.click();
   };
 
+  const handleExportPNG = async () => {
+    const imageWidth = 1024;
+    const imageHeight = 768;
+
+    try {
+      // Get all nodes to calculate bounds
+      const nodesBounds = getNodesBounds(getNodes());
+
+      // Calculate viewport to fit all nodes with padding for edges
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        imageWidth,
+        imageHeight,
+        0.5,  // minZoom
+        2,    // maxZoom
+        0.2   // padding - captures edges extending beyond nodes
+      );
+
+      // Target the viewport element with proper transform
+      const viewportElement = document.querySelector('.react-flow__viewport') as HTMLElement;
+      if (!viewportElement) {
+        console.error('Viewport element not found');
+        return;
+      }
+
+      const dataUrl = await toPng(viewportElement, {
+        backgroundColor: '#ffffff',
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+
+      const link = document.createElement('a');
+      link.download = `process-model-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      setShowExportMenu(false);
+    } catch (err) {
+      console.error('Error exporting PNG:', err);
+      alert('Failed to export PNG. Please try again.');
+    }
+  };
+
+  const handleExportJPG = async () => {
+    const imageWidth = 1024;
+    const imageHeight = 768;
+
+    try {
+      // Get all nodes to calculate bounds
+      const nodesBounds = getNodesBounds(getNodes());
+
+      // Calculate viewport to fit all nodes with padding for edges
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        imageWidth,
+        imageHeight,
+        0.5,  // minZoom
+        2,    // maxZoom
+        0.2   // padding - captures edges extending beyond nodes
+      );
+
+      // Target the viewport element with proper transform
+      const viewportElement = document.querySelector('.react-flow__viewport') as HTMLElement;
+      if (!viewportElement) {
+        console.error('Viewport element not found');
+        return;
+      }
+
+      const dataUrl = await toJpeg(viewportElement, {
+        backgroundColor: '#ffffff',
+        quality: 0.95,
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+
+      const link = document.createElement('a');
+      link.download = `process-model-${Date.now()}.jpg`;
+      link.href = dataUrl;
+      link.click();
+      setShowExportMenu(false);
+    } catch (err) {
+      console.error('Error exporting JPG:', err);
+      alert('Failed to export JPG. Please try again.');
+    }
+  };
+
+  const handleExportPDF = async () => {
+    const imageWidth = 1024;
+    const imageHeight = 768;
+
+    try {
+      // Get all nodes to calculate bounds
+      const nodesBounds = getNodesBounds(getNodes());
+
+      // Calculate viewport to fit all nodes with padding for edges
+      const viewport = getViewportForBounds(
+        nodesBounds,
+        imageWidth,
+        imageHeight,
+        0.5,  // minZoom
+        2,    // maxZoom
+        0.2   // padding - captures edges extending beyond nodes
+      );
+
+      // Target the viewport element with proper transform
+      const viewportElement = document.querySelector('.react-flow__viewport') as HTMLElement;
+      if (!viewportElement) {
+        console.error('Viewport element not found');
+        return;
+      }
+
+      const dataUrl = await toPng(viewportElement, {
+        backgroundColor: '#ffffff',
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
+      });
+
+      const pdf = new jsPDF({
+        orientation: imageWidth > imageHeight ? 'landscape' : 'portrait',
+        unit: 'px',
+        format: [imageWidth, imageHeight],
+      });
+
+      pdf.addImage(dataUrl, 'PNG', 0, 0, imageWidth, imageHeight);
+      pdf.save(`process-model-${Date.now()}.pdf`);
+      setShowExportMenu(false);
+    } catch (err) {
+      console.error('Error exporting PDF:', err);
+      alert('Failed to export PDF. Please try again.');
+    }
+  };
+
+  const handleExportJSON = () => {
+    handleSave();
+    setShowExportMenu(false);
+  };
+
+  const handleSubmitForApproval = () => {
+    if (nodes.length === 0) {
+      alert('Please create a process model before submitting for approval.');
+      return;
+    }
+
+    const name = processName || prompt('Enter a name for this process model:');
+    if (!name) return;
+
+    setProcessName(name);
+
+    try {
+      // Generate a unique document ID
+      const documentId = uuidv4();
+
+      // Create process model data
+      const processModelData = {
+        id: documentId,
+        title: name,
+        nodes,
+        edges,
+        createdAt: new Date().toISOString(),
+        createdBy: userName,
+      };
+
+      // Store the process model in localStorage
+      const processModelsKey = 'processModels';
+      const existingModels = localStorage.getItem(processModelsKey);
+      const models = existingModels ? JSON.parse(existingModels) : [];
+      models.push(processModelData);
+      localStorage.setItem(processModelsKey, JSON.stringify(models));
+
+      // Create a request for approval
+      const newRequest = addRequest({
+        requestType: 'Process Model Request',
+        requestDetail: `Process Model: ${name}`,
+        serviceName: `Process Model: ${name}`,
+        serviceCategory: 'Process Modeling',
+        priority: 'Medium',
+        latestNote: 'Process model created and submitted for approval',
+        requester: userName,
+        requesterEmail: userEmail,
+        department: 'Operations',
+        fullDescription: `A new process model "${name}" has been created and submitted for approval. This model contains ${nodes.length} nodes and ${edges.length} connections.`,
+      });
+
+      // Link the document to the request
+      submitForApproval(newRequest.id, documentId);
+
+      alert(`Process model "${name}" has been submitted for approval!\n\nTicket Number: ${newRequest.ticketNumber}`);
+
+      // Optionally navigate to track requests
+      const shouldNavigate = confirm('Would you like to view your request?');
+      if (shouldNavigate) {
+        navigate('/track-requests');
+      }
+    } catch (err) {
+      console.error('Error submitting for approval:', err);
+      alert('Failed to submit process model for approval. Please try again.');
+    }
+  };
+
   return (
     <div className="h-screen flex flex-col bg-gray-50 -mt-10">
       {/* Header */}
@@ -178,12 +413,60 @@ const FlowCanvas = () => {
               <Save className="-ml-1 mr-2 h-5 w-5" />
               Save Model
             </button>
+
+            {/* Export Dropdown */}
+            <div className="relative export-dropdown">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]"
+              >
+                <Download className="-ml-1 mr-2 h-5 w-5" />
+                Export
+                <ChevronDown className="ml-2 -mr-1 h-4 w-4" />
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-1" role="menu">
+                    <button
+                      onClick={handleExportPNG}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                    >
+                      Export as PNG
+                    </button>
+                    <button
+                      onClick={handleExportJPG}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                    >
+                      Export as JPG
+                    </button>
+                    <button
+                      onClick={handleExportPDF}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                    >
+                      Export as PDF
+                    </button>
+                    <button
+                      onClick={handleExportJSON}
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      role="menuitem"
+                    >
+                      Export as JSON
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
-              onClick={handleSave}
+              onClick={handleSubmitForApproval}
               className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
-              <Download className="-ml-1 mr-2 h-5 w-5" />
-              Export
+              <Send className="-ml-1 mr-2 h-5 w-5" />
+              Submit for Approval
             </button>
           </div>
         </div>
@@ -292,7 +575,7 @@ const FlowCanvas = () => {
             onNodesDelete={onNodesDelete}
             onEdgesDelete={onEdgesDelete}
             nodeTypes={nodeTypes}
-            deleteKeyCode="Delete"
+            deleteKeyCode={['Backspace', 'Delete']}
             fitView
           >
             <Controls />

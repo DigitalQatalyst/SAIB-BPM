@@ -29,3 +29,12 @@
 .animation-delay-4000 {
   animation-delay: 4s;
 }
+
+/* ReactFlow Export Fix - Allow edges to overflow for image export */
+.react-flow__edges {
+  overflow: visible !important;
+}
+
+.react-flow svg {
+  overflow: visible !important;
+}
