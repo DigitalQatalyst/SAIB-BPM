@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Send, AlertCircle, Info, Upload, PlusCircle, CheckCircle, HelpCircle } from 'lucide-react';
+import { ArrowLeft, Send, AlertCircle, Info, Upload, PlusCircle, CheckCircle, HelpCircle, Search } from 'lucide-react';
 import AcknowledgmentModal from '../components/marketplace/AcknowledgmentModal';
 import { addRequest } from '../services/requestTracking';
 import { useUser } from '../context/UserContext';
+import { getServiceById, Service } from '../services/airtable';
 // Define the impact question type
 interface ImpactQuestion {
   id: string;
@@ -25,6 +26,10 @@ const ServiceRequestForm = () => {
   }>();
   const navigate = useNavigate();
   const user = useUser();
+  
+  // Service state
+  const [service, setService] = useState<Service | null>(null);
+  const [serviceLoading, setServiceLoading] = useState(true);
   // Form state
   const [formState, setFormState] = useState({
     title: '',
@@ -33,6 +38,27 @@ const ServiceRequestForm = () => {
     justification: '',
     description: ''
   });
+  
+  // Modal state for procedure selection
+  const [isProcedureModalOpen, setIsProcedureModalOpen] = useState(false);
+  const [selectedProcedure, setSelectedProcedure] = useState<string>('');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  // Mock procedure documents for the demo
+  const mockProcedures = [
+    { id: 1, name: 'Business Processes and Procedures Manual', description: 'Comprehensive manual outlining standard operating procedures for key business processes', lastModified: '2024-12-20' },
+    { id: 2, name: 'Treasury Operations Manual', description: 'Comprehensive guide for treasury operations and procedures', lastModified: '2024-12-15' },
+    { id: 3, name: 'Customer Onboarding Procedures', description: 'Step-by-step process for new customer registration', lastModified: '2024-11-28' },
+    { id: 4, name: 'Risk Assessment Manual', description: 'Guidelines for conducting risk assessments', lastModified: '2024-12-01' },
+    { id: 5, name: 'Compliance Monitoring Procedures', description: 'Procedures for ongoing compliance monitoring', lastModified: '2024-10-20' },
+    { id: 6, name: 'Audit Trail Documentation', description: 'Standards for maintaining audit documentation', lastModified: '2024-11-15' }
+  ];
+
+  // Filter procedures based on search query
+  const filteredProcedures = mockProcedures.filter(procedure =>
+    procedure.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    procedure.description.toLowerCase().includes(searchQuery.toLowerCase())
+  );
   // Qualifying questions to determine if a request is major or minor
   const [qualifyingQuestions, setQualifyingQuestions] = useState<QualifyingQuestion[]>([{
     id: 'multi_dept',
@@ -132,6 +158,28 @@ const ServiceRequestForm = () => {
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [requestNumber, setRequestNumber] = useState('');
+
+  // Fetch service details
+  useEffect(() => {
+    const fetchService = async () => {
+      if (!id) {
+        setServiceLoading(false);
+        return;
+      }
+      
+      try {
+        setServiceLoading(true);
+        const serviceData = await getServiceById(id);
+        setService(serviceData);
+      } catch (error) {
+        console.error('Error fetching service:', error);
+      } finally {
+        setServiceLoading(false);
+      }
+    };
+
+    fetchService();
+  }, [id]);
   // Handle input changes for the basic form fields
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const {
@@ -172,6 +220,14 @@ const ServiceRequestForm = () => {
     // Update assigned stakeholders based on selected questions
     const stakeholders = updatedQuestions.filter(q => q.checked).map(q => q.assignedStakeholder).filter((s): s is string => s !== undefined);
     setAssignedStakeholders([...new Set(stakeholders)]);
+  };
+
+  // Handle procedure selection
+  const handleProcedureSelect = (procedure: { id: number; name: string; description: string; lastModified: string }) => {
+    setSelectedProcedure(procedure.name);
+    setFormState(prev => ({ ...prev, title: procedure.name }));
+    setIsProcedureModalOpen(false);
+    setSearchQuery(''); // Reset search when closing
   };
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,11 +283,48 @@ const ServiceRequestForm = () => {
   };
   // Get dynamic title based on service type
   const getFormTitle = () => {
-    // This would ideally be based on the actual service being requested
-    return 'Request to Develop New Manual';
+    if (!service) return 'Request Service';
+    
+    // Check if the service title contains specific keywords to determine the form title
+    const title = service.title.toLowerCase();
+    
+    if (title.includes('revise') && title.includes('manual')) {
+      return 'Request to Revise Procedure Manual';
+    } else if (title.includes('develop') && title.includes('manual')) {
+      return 'Request to Develop New Manual';
+    } else if (title.includes('update') && title.includes('manual')) {
+      return 'Request to Update Manual';
+    } else if (title.includes('cancel') && title.includes('manual')) {
+      return 'Request to Cancel Manual';
+    } else if (title.includes('revise') && title.includes('procedure')) {
+      return 'Request to Revise Procedure';
+    } else if (title.includes('develop') && title.includes('procedure')) {
+      return 'Request to Develop New Procedure';
+    } else if (title.includes('update') && title.includes('procedure')) {
+      return 'Request to Update Procedure';
+    } else if (title.includes('cancel') && title.includes('procedure')) {
+      return 'Request to Cancel Procedure';
+    } else if (title.includes('revise') && title.includes('policy')) {
+      return 'Request to Revise Policy';
+    } else if (title.includes('develop') && title.includes('policy')) {
+      return 'Request to Develop New Policy';
+    } else if (title.includes('update') && title.includes('policy')) {
+      return 'Request to Update Policy';
+    } else if (title.includes('cancel') && title.includes('policy')) {
+      return 'Request to Cancel Policy';
+    } else {
+      // Fallback: use the service title with "Request to" prefix
+      return `Request to ${service.title}`;
+    }
   };
   return <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      {serviceLoading ? (
+        <div className="bg-gray-50 min-h-screen pb-16 flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FECC0E]"></div>
+        </div>
+      ) : (
+        <>
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="mb-6">
           <button onClick={() => navigate(`/service/${id}`)} className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
             <ArrowLeft className="mr-1 h-4 w-4" />
@@ -241,8 +334,7 @@ const ServiceRequestForm = () => {
             {getFormTitle()}
           </h1>
           <p className="mt-2 text-base text-gray-500">
-            Complete the form below to request a new or updated procedure
-            document
+            Complete the form below to request the selected service
           </p>
         </div>
         {/* Error message display */}
@@ -260,17 +352,39 @@ const ServiceRequestForm = () => {
                 Basic Information
               </h2>
               <p className="mt-1 text-sm text-gray-500">
-                Provide details about the procedure request
+                Provide details about the {service?.category?.toLowerCase() || 'service'} request
               </p>
             </div>
             <div className="px-4 py-5 sm:px-6">
               <div className="grid grid-cols-1 gap-y-6">
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                    Name of procedure
+                    Select Procedure Manual to Revise
                   </label>
                   <div className="mt-1">
-                    <input type="text" name="title" id="title" required value={formState.title} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" placeholder="Enter procedure name" />
+                    <button
+                      type="button"
+                      onClick={() => setIsProcedureModalOpen(true)}
+                      className={`w-full text-left shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block sm:text-sm border rounded-md h-12 px-4 bg-white hover:bg-gray-50 transition-colors flex items-center justify-between ${
+                        selectedProcedure ? 'border-[#FECC0E] bg-[#FECC0E]/5' : 'border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {selectedProcedure && (
+                          <img 
+                            src="/microsoft-word-icon.webp" 
+                            alt="Word Document" 
+                            className="w-6 h-6 object-contain"
+                          />
+                        )}
+                        <span className={selectedProcedure ? 'text-gray-900 font-medium' : 'text-gray-500'}>
+                          {selectedProcedure || 'Click to select a procedure manual...'}
+                        </span>
+                      </div>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
                 <div>
@@ -342,7 +456,7 @@ const ServiceRequestForm = () => {
                     Justification
                   </label>
                   <div className="mt-1">
-                    <textarea id="justification" name="justification" rows={3} required value={formState.justification} onChange={handleInputChange} placeholder="Explain why this procedure is needed" className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
+                    <textarea id="justification" name="justification" rows={3} required value={formState.justification} onChange={handleInputChange} placeholder={`Explain why this ${service?.category?.toLowerCase() || 'service'} is needed`} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
                   </div>
                 </div>
                 <div>
@@ -447,9 +561,131 @@ const ServiceRequestForm = () => {
             </button>
           </div>
         </form>
-      </div>
-      {/* Acknowledgment Modal */}
-      <AcknowledgmentModal isOpen={isModalOpen} onClose={handleCloseModal} requestNumber={requestNumber} />
+          </div>
+          {/* Procedure Selection Modal */}
+          {isProcedureModalOpen && (
+            <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+              <div className="relative top-10 mx-auto p-0 border w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 shadow-xl rounded-lg bg-white max-h-[90vh] flex flex-col">
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      Select Procedure Manual to Revise
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Choose from available procedure manuals
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsProcedureModalOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  >
+                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Search Bar */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Search className="h-5 w-5 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Search procedure manuals..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-[#FECC0E] focus:border-[#FECC0E] sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Procedures List */}
+                <div className="flex-1 overflow-y-auto p-6">
+                  {filteredProcedures.length > 0 ? (
+                    <div className="space-y-3">
+                      {filteredProcedures.map((procedure) => (
+                        <div
+                          key={procedure.id}
+                          onClick={() => handleProcedureSelect(procedure)}
+                          className="group p-4 border border-gray-200 rounded-lg hover:border-[#FECC0E] hover:bg-[#FECC0E]/5 cursor-pointer transition-all duration-200 hover:shadow-md"
+                        >
+                          <div className="flex items-start space-x-4">
+                            {/* Word Icon */}
+                            <div className="flex-shrink-0">
+                              <img 
+                                src="/microsoft-word-icon.webp" 
+                                alt="Word Document" 
+                                className="w-12 h-12 object-contain"
+                              />
+                            </div>
+                            
+                            {/* Document Info */}
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 group-hover:text-[#9E800D] transition-colors">
+                                {procedure.name}
+                              </h4>
+                              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                                {procedure.description}
+                              </p>
+                              <div className="flex items-center mt-2 text-xs text-gray-500">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                Last modified: {procedure.lastModified}
+                              </div>
+                            </div>
+
+                            {/* Select Arrow */}
+                            <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <svg className="w-5 h-5 text-[#FECC0E]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">No procedures found</h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Try adjusting your search terms.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex justify-between items-center p-6 border-t border-gray-200 bg-gray-50">
+                  <p className="text-sm text-gray-500">
+                    {filteredProcedures.length} procedure{filteredProcedures.length !== 1 ? 's' : ''} available
+                  </p>
+                  <button
+                    onClick={() => {
+                      setIsProcedureModalOpen(false);
+                      setSearchQuery('');
+                    }}
+                    className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {/* Acknowledgment Modal */}
+          <AcknowledgmentModal isOpen={isModalOpen} onClose={handleCloseModal} requestNumber={requestNumber} />
+        </>
+      )}
     </div>;
 };
 export default ServiceRequestForm;

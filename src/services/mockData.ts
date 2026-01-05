@@ -71,6 +71,24 @@ export const mockServices = [{
   tags: ['Update'],
   processSteps: ['Identify specific updates needed', 'Draft updated language', 'Obtain necessary approvals', 'Implement and communicate changes'],
   useCases: ['Updating department names or organizational references', 'Clarifying existing requirements without changing substance', 'Making minor formatting or structural improvements']
+}, {
+  id: 'rec5',
+  // New service for Revise Manual
+  title: 'Revise Manual',
+  description: 'Update an existing manual to address regulatory changes, process improvements, or operational updates.',
+  longDescription: 'This service provides comprehensive support for revising existing manuals to address regulatory changes, process improvements, or operational updates. Our team will help you identify necessary changes, draft revised content, coordinate reviews with stakeholders, and guide the updated document through the approval process.',
+  category: 'Procedure',
+  department: 'All',
+  priority: 'Medium',
+  complexity: 'Medium',
+  responseSLA: 24,
+  resolutionSLA: 10,
+  deliverySLA: 14,
+  domain: 'Operations',
+  audience: ['All Staff', 'Management', 'Department Heads'],
+  tags: ['Revision', 'Manual'],
+  processSteps: ['Review current manual and identify needed changes', 'Draft revised manual content', 'Conduct stakeholder review and gather feedback', 'Revise based on feedback', 'Obtain necessary approvals', 'Implement and communicate changes'],
+  useCases: ['Updating manuals to reflect regulatory changes', 'Revising manuals based on process improvements', 'Enhancing manuals to improve clarity or operational effectiveness']
 }];
 // Function to get a service by ID from mock data
 export const getMockServiceById = (id: string) => {
@@ -79,7 +97,7 @@ export const getMockServiceById = (id: string) => {
   if (id === '2') return mockServices[1];
   if (id === '3') return mockServices[2];
   if (id === '4') return mockServices[3];
-  if (id === '5') return mockServices[0]; // Fallback to first service
+  if (id === '5') return mockServices[4]; // New Revise Manual service
   if (id === '6') return mockServices[1]; // Fallback to second service
   // Otherwise try to find it directly
   return mockServices.find(service => service.id === id) || null;
