@@ -6,6 +6,7 @@ import { useLanguage } from '../context/LanguageContext';
 import axios from 'axios';
 import { bilingualPolicyTemplate, generateBilingualMarkdown, customizeTemplate } from '../utils/documentTemplates';
 import { generateFormattedWordDocument } from '../utils/wordGenerator';
+import { getLinkedProcessModel, getProcessModelImage } from '../utils/processModelUtils';
 import CommentSection from '../components/docwriter/CommentSection';
 import VersionHistory from '../components/docwriter/VersionHistory';
 import { CollaborationProvider } from '../context/CollaborationContext';
@@ -49,6 +50,12 @@ const DocWriter = () => {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Process model state
+  const [processModelId, setProcessModelId] = useState<string | null>(null);
+  const [processModelImage, setProcessModelImage] = useState<string | null>(null);
+  const [processModelTitle, setProcessModelTitle] = useState<string>('');
+
   // Azure OpenAI API configuration with fallback values
   const azureOpenAIBaseUrl = typeof process !== 'undefined' && process.env && process.env.REACT_APP_AZURE_OPENAI_BASE_URL ? process.env.REACT_APP_AZURE_OPENAI_BASE_URL : 'https://samwe-m4r3zeki-swedencentral.openai.azure.com/openai/deployments/gpt-4-32k/chat/completions?api-version=2024-02-15-preview';
   const azureOpenAIApiKey = typeof process !== 'undefined' && process.env && process.env.REACT_APP_AZURE_OPENAI_API_KEY ? process.env.REACT_APP_AZURE_OPENAI_API_KEY : 'BaILIpDCFlyXTXXWXQWw5Kxpj6cwpJ4fkTNhJbY2Kj9QmpH4a83VJQQJ99ALACfhMk5XJ3w3AAAAACOGOmml';
@@ -107,6 +114,33 @@ const DocWriter = () => {
       });
     }
   }, [requestId, templateId, getDocumentByRequestId, setCurrentDocument]);
+
+  // Load process model if linked to this document
+  useEffect(() => {
+    if (requestId) {
+      const linkedModel = getLinkedProcessModel(requestId);
+      if (linkedModel) {
+        setProcessModelId(linkedModel.id);
+        setProcessModelImage(linkedModel.imageDataUrl);
+        setProcessModelTitle(linkedModel.title);
+      }
+
+      // Check if just returned from process model creator
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('processModelAdded') === 'true') {
+        // Refresh process model data
+        const refreshedModel = getLinkedProcessModel(requestId);
+        if (refreshedModel) {
+          setProcessModelId(refreshedModel.id);
+          setProcessModelImage(refreshedModel.imageDataUrl);
+          setProcessModelTitle(refreshedModel.title);
+        }
+        // Clean up URL
+        window.history.replaceState({}, '', `/docwriter/${requestId}`);
+      }
+    }
+  }, [requestId]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const {
       name,
@@ -442,8 +476,18 @@ Please format the document using Markdown syntax.
       try {
         // Show loading indicator
         setIsDownloading(true);
-        // Generate Word document with SAIB branding
-        await generateFormattedWordDocument(document.content, formState.title, formState.documentLanguage);
+
+        // Get process model image if exists
+        const processImage = processModelImage || undefined;
+
+        // Generate Word document with SAIB branding and process model
+        await generateFormattedWordDocument(
+          document.content,
+          formState.title,
+          formState.documentLanguage,
+          processImage
+        );
+
         // Success message
         setDownloadSuccess(true);
         setTimeout(() => setDownloadSuccess(false), 3000);
@@ -478,284 +522,320 @@ Please format the document using Markdown syntax.
     }
   };
   return <div className="bg-gray-50 min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="mb-6">
-          <button onClick={handleBackToRequest} className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
-            <ArrowLeft className="mr-1 h-4 w-4" />
-            {requestId ? 'Back to Requests' : 'Back to Templates'}
-          </button>
-          <h1 className="mt-4 text-3xl font-semibold text-gray-900">
-            AI DocWriter
-          </h1>
-          <p className="mt-2 text-lg text-gray-500">
-            {editMode ? 'Edit document based on service request feedback' : requestId ? 'Generate document based on service request information' : 'Create document using the selected template'}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mb-6">
+        <button onClick={handleBackToRequest} className="flex items-center text-sm font-medium text-gray-500 hover:text-gray-700">
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          {requestId ? 'Back to Requests' : 'Back to Templates'}
+        </button>
+        <h1 className="mt-4 text-3xl font-semibold text-gray-900">
+          AI DocWriter
+        </h1>
+        <p className="mt-2 text-lg text-gray-500">
+          {editMode ? 'Edit document based on service request feedback' : requestId ? 'Generate document based on service request information' : 'Create document using the selected template'}
+        </p>
+      </div>
+      {/* Error message display */}
+      {error && <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
+        <div className="flex">
+          <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+          <span>{error}</span>
+        </div>
+      </div>}
+      {showForm ? <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">
+            {formStep === 'info' ? 'Document Generation Form' : 'Additional Documents'}
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            {formStep === 'info' ? 'Provide additional context to help the AI generate a better document' : 'Upload additional documents to assist with document generation'}
           </p>
         </div>
-        {/* Error message display */}
-        {error && <div className="mb-4 bg-red-50 border border-red-200 text-red-800 rounded-md p-4">
-            <div className="flex">
-              <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-              <span>{error}</span>
+        {formStep === 'info' && <div className="px-4 py-5 sm:px-6">
+          <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-6">
+            <div className="sm:col-span-2">
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+                Document Title
+              </label>
+              <div className="mt-1">
+                <input type="text" name="title" id="title" value={formState.title} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" />
+              </div>
             </div>
-          </div>}
-        {showForm ? <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">
-                {formStep === 'info' ? 'Document Generation Form' : 'Additional Documents'}
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                {formStep === 'info' ? 'Provide additional context to help the AI generate a better document' : 'Upload additional documents to assist with document generation'}
+            <div>
+              <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+                Category
+              </label>
+              <div className="mt-1">
+                <input type="text" name="category" id="category" value={formState.category} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" />
+              </div>
+            </div>
+            <div>
+              <label htmlFor="sourceOfRequest" className="block text-sm font-medium text-gray-700">
+                Source of Request
+              </label>
+              <div className="mt-1">
+                <input type="text" name="sourceOfRequest" id="sourceOfRequest" value={formState.sourceOfRequest} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" />
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="documentLanguage" className="block text-sm font-medium text-gray-700">
+                Document Language
+              </label>
+              <div className="mt-1">
+                <select id="documentLanguage" name="documentLanguage" value={formState.documentLanguage} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-3">
+                  <option value="english">English Only</option>
+                  <option value="arabic">Arabic Only</option>
+                  <option value="bilingual">
+                    Bilingual (English & Arabic)
+                  </option>
+                </select>
+              </div>
+              <p className="mt-1 text-sm text-gray-500 flex items-center">
+                <Globe className="h-4 w-4 mr-1 text-gray-400" />
+                {formState.documentLanguage === 'bilingual' ? 'Document will be generated with both English and Arabic content' : formState.documentLanguage === 'arabic' ? 'Document will be generated in Arabic only' : 'Document will be generated in English only'}
               </p>
+              {formState.documentLanguage === 'bilingual' && formState.title.toLowerCase().includes('business process') && <p className="mt-2 text-sm text-green-600 flex items-center">
+                <Check className="h-4 w-4 mr-1" />
+                Using structured bilingual template for Business
+                Process & Procedure Policy
+              </p>}
             </div>
-            {formStep === 'info' && <div className="px-4 py-5 sm:px-6">
-                <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-6">
-                  <div className="sm:col-span-2">
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-                      Document Title
+            <div className="sm:col-span-2">
+              <label htmlFor="justification" className="block text-sm font-medium text-gray-700">
+                Justification
+              </label>
+              <div className="mt-1">
+                <textarea id="justification" name="justification" rows={3} required value={formState.justification} onChange={handleInputChange} placeholder="Explain why this policy is needed" className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <label htmlFor="additionalContext" className="block text-sm font-medium text-gray-700">
+                Additional Context
+              </label>
+              <div className="mt-1">
+                <textarea id="additionalContext" name="additionalContext" rows={4} value={formState.additionalContext} onChange={handleInputChange} placeholder="Provide any additional information that would help in generating a better document" className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
+              </div>
+            </div>
+          </div>
+          <div className="mt-6 flex justify-end space-x-3">
+            <button type="button" onClick={handleBackToRequest} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+              Cancel
+            </button>
+            <button type="button" onClick={handleNextStep} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
+              Next
+            </button>
+          </div>
+        </div>}
+        {formStep === 'additionalDocs' && <div className="px-4 py-5 sm:px-6">
+          <div className="space-y-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Upload Additional Documents
+              </label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                <div className="space-y-1 text-center">
+                  <FileUp className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="flex text-sm text-gray-600">
+                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                      <span>Upload a document</span>
+                      <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".doc,.docx,.pdf,.txt,.md,.xml" onChange={handleFileChange} />
                     </label>
-                    <div className="mt-1">
-                      <input type="text" name="title" id="title" value={formState.title} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" />
-                    </div>
+                    <p className="pl-1">or drag and drop</p>
                   </div>
+                  <p className="text-xs text-gray-500">
+                    DOC, DOCX, PDF, TXT, MD, XML up to 10MB
+                  </p>
+                </div>
+              </div>
+              {additionalDocFile && <p className="mt-2 text-sm text-gray-500">
+                Selected file: {additionalDocFile.name}
+              </p>}
+            </div>
+            <div className="mt-6 flex justify-between">
+              <button type="button" onClick={handlePrevStep} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                Back
+              </button>
+              <button type="button" onClick={handleGenerateDocument} disabled={isGenerating} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
+                {isGenerating ? <>
+                  <RotateCw className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                  Generating...
+                </> : <>
+                  <Sparkles className="-ml-1 mr-2 h-4 w-4" />
+                  Generate Document
+                </>}
+              </button>
+            </div>
+          </div>
+        </div>}
+      </div> : document && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+          <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
+            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h2 className="text-lg font-medium text-gray-900">
+                  Document Editor
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Review and edit the generated document before sending
+                  for approval
+                </p>
+              </div>
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => navigate(`/process-model-creator/${requestId}`)}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]"
+                >
+                  <Network className="-ml-0.5 mr-2 h-4 w-4" />
+                  {processModelId ? 'Edit Process Model' : 'Create Process Model'}
+                </button>
+                <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                  <Save className="-ml-0.5 mr-2 h-4 w-4" />
+                  Save Draft
+                </button>
+                <button type="button" onClick={handleDownloadWord} disabled={isDownloading} className={`inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E] ${isDownloading ? 'opacity-75 cursor-not-allowed' : ''}`}>
+                  {isDownloading ? <>
+                    <RotateCw className="animate-spin -ml-0.5 mr-2 h-4 w-4" />
+                    Generating...
+                  </> : <>
+                    <Download className="-ml-0.5 mr-2 h-4 w-4" />
+                    Download as Word
+                  </>}
+                </button>
+                <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                  <Send className="-ml-0.5 mr-2 h-4 w-4" />
+                  Send to Approver
+                </button>
+              </div>
+            </div>
+            {/* Download status notifications */}
+            {downloadSuccess && <div className="px-4 py-3 bg-green-50 border-b border-green-200">
+              <div className="flex">
+                <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
+                <p className="text-sm text-green-700">
+                  Document successfully downloaded as Word
+                </p>
+              </div>
+            </div>}
+            {downloadError && <div className="px-4 py-3 bg-red-50 border-b border-red-200">
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+                <p className="text-sm text-red-700">{downloadError}</p>
+              </div>
+            </div>}
+
+            {/* Process Model Preview */}
+            {processModelImage && (
+              <div className="px-4 py-4 bg-gray-50 border-b border-gray-200">
+                <div className="flex items-center justify-between mb-3">
                   <div>
-                    <label htmlFor="category" className="block text-sm font-medium text-gray-700">
-                      Category
-                    </label>
-                    <div className="mt-1">
-                      <input type="text" name="category" id="category" value={formState.category} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" />
-                    </div>
+                    <h3 className="text-sm font-medium text-gray-900">Process Flow Diagram</h3>
+                    <p className="text-xs text-gray-500 mt-0.5">{processModelTitle}</p>
                   </div>
-                  <div>
-                    <label htmlFor="sourceOfRequest" className="block text-sm font-medium text-gray-700">
-                      Source of Request
-                    </label>
-                    <div className="mt-1">
-                      <input type="text" name="sourceOfRequest" id="sourceOfRequest" value={formState.sourceOfRequest} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-4" />
-                    </div>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label htmlFor="documentLanguage" className="block text-sm font-medium text-gray-700">
-                      Document Language
-                    </label>
-                    <div className="mt-1">
-                      <select id="documentLanguage" name="documentLanguage" value={formState.documentLanguage} onChange={handleInputChange} className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md h-10 px-3">
-                        <option value="english">English Only</option>
-                        <option value="arabic">Arabic Only</option>
-                        <option value="bilingual">
-                          Bilingual (English & Arabic)
-                        </option>
-                      </select>
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500 flex items-center">
-                      <Globe className="h-4 w-4 mr-1 text-gray-400" />
-                      {formState.documentLanguage === 'bilingual' ? 'Document will be generated with both English and Arabic content' : formState.documentLanguage === 'arabic' ? 'Document will be generated in Arabic only' : 'Document will be generated in English only'}
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/process-model-creator/${requestId}`)}
+                    className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                  >
+                    <Network className="h-3.5 w-3.5 mr-1" />
+                    Edit Model
+                  </button>
+                </div>
+                <div className="bg-white p-3 rounded border border-gray-300">
+                  <img
+                    src={processModelImage}
+                    alt="Process Model"
+                    className="w-full rounded"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-2 flex items-center">
+                  <AlertCircle className="h-3 w-3 mr-1" />
+                  This process diagram will be automatically embedded in the generated Word document
+                </p>
+              </div>
+            )}
+
+            {document.status === 'Needs Revision' && <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-200">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Revision Required
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      The document needs more detail on the multi-factor
+                      authentication implementation requirements. Please
+                      revise section 3.2 to include specific guidance
+                      for different user roles.
                     </p>
-                    {formState.documentLanguage === 'bilingual' && formState.title.toLowerCase().includes('business process') && <p className="mt-2 text-sm text-green-600 flex items-center">
-                          <Check className="h-4 w-4 mr-1" />
-                          Using structured bilingual template for Business
-                          Process & Procedure Policy
-                        </p>}
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label htmlFor="justification" className="block text-sm font-medium text-gray-700">
-                      Justification
-                    </label>
-                    <div className="mt-1">
-                      <textarea id="justification" name="justification" rows={3} required value={formState.justification} onChange={handleInputChange} placeholder="Explain why this policy is needed" className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
-                    </div>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <label htmlFor="additionalContext" className="block text-sm font-medium text-gray-700">
-                      Additional Context
-                    </label>
-                    <div className="mt-1">
-                      <textarea id="additionalContext" name="additionalContext" rows={4} value={formState.additionalContext} onChange={handleInputChange} placeholder="Provide any additional information that would help in generating a better document" className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
-                    </div>
                   </div>
                 </div>
-                <div className="mt-6 flex justify-end space-x-3">
-                  <button type="button" onClick={handleBackToRequest} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                    Cancel
-                  </button>
-                  <button type="button" onClick={handleNextStep} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
-                    Next
-                  </button>
-                </div>
-              </div>}
-            {formStep === 'additionalDocs' && <div className="px-4 py-5 sm:px-6">
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Upload Additional Documents
-                    </label>
-                    <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                      <div className="space-y-1 text-center">
-                        <FileUp className="mx-auto h-12 w-12 text-gray-400" />
-                        <div className="flex text-sm text-gray-600">
-                          <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                            <span>Upload a document</span>
-                            <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".doc,.docx,.pdf,.txt,.md,.xml" onChange={handleFileChange} />
-                          </label>
-                          <p className="pl-1">or drag and drop</p>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          DOC, DOCX, PDF, TXT, MD, XML up to 10MB
-                        </p>
-                      </div>
-                    </div>
-                    {additionalDocFile && <p className="mt-2 text-sm text-gray-500">
-                        Selected file: {additionalDocFile.name}
-                      </p>}
-                  </div>
-                  <div className="mt-6 flex justify-between">
-                    <button type="button" onClick={handlePrevStep} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                      Back
-                    </button>
-                    <button type="button" onClick={handleGenerateDocument} disabled={isGenerating} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
-                      {isGenerating ? <>
-                          <RotateCw className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                          Generating...
-                        </> : <>
-                          <Sparkles className="-ml-1 mr-2 h-4 w-4" />
-                          Generate Document
-                        </>}
-                    </button>
-                  </div>
-                </div>
-              </div>}
-          </div> : document && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2">
-                <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
-                  <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-                    <div>
-                      <h2 className="text-lg font-medium text-gray-900">
-                        Document Editor
-                      </h2>
-                      <p className="mt-1 text-sm text-gray-500">
-                        Review and edit the generated document before sending
-                        for approval
-                      </p>
-                    </div>
-                    <div className="flex space-x-3">
-                      <button type="button" onClick={() => navigate('/process-model-creator')} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                        <Network className="-ml-0.5 mr-2 h-4 w-4" />
-                        Create Process Model
-                      </button>
-                      <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                        <Save className="-ml-0.5 mr-2 h-4 w-4" />
-                        Save Draft
-                      </button>
-                      <button type="button" onClick={handleDownloadWord} disabled={isDownloading} className={`inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E] ${isDownloading ? 'opacity-75 cursor-not-allowed' : ''}`}>
-                        {isDownloading ? <>
-                            <RotateCw className="animate-spin -ml-0.5 mr-2 h-4 w-4" />
-                            Generating...
-                          </> : <>
-                            <Download className="-ml-0.5 mr-2 h-4 w-4" />
-                            Download as Word
-                          </>}
-                      </button>
-                      <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        <Send className="-ml-0.5 mr-2 h-4 w-4" />
-                        Send to Approver
-                      </button>
-                    </div>
-                  </div>
-                  {/* Download status notifications */}
-                  {downloadSuccess && <div className="px-4 py-3 bg-green-50 border-b border-green-200">
-                      <div className="flex">
-                        <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                        <p className="text-sm text-green-700">
-                          Document successfully downloaded as Word
-                        </p>
-                      </div>
-                    </div>}
-                  {downloadError && <div className="px-4 py-3 bg-red-50 border-b border-red-200">
-                      <div className="flex">
-                        <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                        <p className="text-sm text-red-700">{downloadError}</p>
-                      </div>
-                    </div>}
-                  {document.status === 'Needs Revision' && <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-200">
-                      <div className="flex">
-                        <div className="flex-shrink-0">
-                          <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                        </div>
-                        <div className="ml-3">
-                          <h3 className="text-sm font-medium text-yellow-800">
-                            Revision Required
-                          </h3>
-                          <div className="mt-2 text-sm text-yellow-700">
-                            <p>
-                              The document needs more detail on the multi-factor
-                              authentication implementation requirements. Please
-                              revise section 3.2 to include specific guidance
-                              for different user roles.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>}
-                  <div className="px-4 py-5 sm:px-6">
-                    <div className="flex items-center mb-4 text-sm text-gray-500">
-                      <FileText className="mr-2 h-5 w-5 text-gray-400" />
-                      <span>{formState.title}</span>
-                      {formState.documentLanguage === 'bilingual' && <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                          Bilingual
-                        </span>}
-                      {formState.documentLanguage === 'arabic' && <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                          Arabic
-                        </span>}
-                    </div>
-                    {/* Enhanced bilingual document display */}
-                    <div className={`border border-gray-300 rounded-md shadow-sm ${formState.documentLanguage === 'bilingual' ? 'bilingual-document' : ''}`}>
-                      <textarea rows={25} value={document.content} onChange={handleContentChange} className="block w-full border-0 p-4 font-mono text-sm focus:ring-[#FECC0E] focus:border-[#FECC0E]" style={{
+              </div>
+            </div>}
+            <div className="px-4 py-5 sm:px-6">
+              <div className="flex items-center mb-4 text-sm text-gray-500">
+                <FileText className="mr-2 h-5 w-5 text-gray-400" />
+                <span>{formState.title}</span>
+                {formState.documentLanguage === 'bilingual' && <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                  Bilingual
+                </span>}
+                {formState.documentLanguage === 'arabic' && <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                  Arabic
+                </span>}
+              </div>
+              {/* Enhanced bilingual document display */}
+              <div className={`border border-gray-300 rounded-md shadow-sm ${formState.documentLanguage === 'bilingual' ? 'bilingual-document' : ''}`}>
+                <textarea rows={25} value={document.content} onChange={handleContentChange} className="block w-full border-0 p-4 font-mono text-sm focus:ring-[#FECC0E] focus:border-[#FECC0E]" style={{
                   lineHeight: 1.6,
                   direction: formState.documentLanguage === 'arabic' ? 'rtl' : 'ltr'
                 }} onMouseUp={handleTextSelection} />
-                    </div>
-                    <style jsx>{`
+              </div>
+              <style jsx>{`
                       .bilingual-document textarea {
                         white-space: pre-wrap;
                         overflow-wrap: break-word;
                       }
                     `}</style>
-                    <div className="mt-6 flex justify-between">
-                      <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                        Back to Form
-                      </button>
-                      <div className="flex space-x-3">
-                        <button type="button" onClick={() => navigate('/process-model-creator')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                          <Network className="-ml-1 mr-2 h-5 w-5" />
-                          Create Process Model
-                        </button>
-                        <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                          <Save className="-ml-1 mr-2 h-5 w-5" />
-                          Save Draft
-                        </button>
-                        <button type="button" onClick={handleDownloadWord} disabled={isDownloading} className={`inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E] ${isDownloading ? 'opacity-75 cursor-not-allowed' : ''}`}>
-                          {isDownloading ? <>
-                              <RotateCw className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                              Generating...
-                            </> : <>
-                              <Download className="-ml-1 mr-2 h-5 w-5" />
-                              Download as Word
-                            </>}
-                        </button>
-                        <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                          <Send className="-ml-1 mr-2 h-5 w-5" />
-                          Send to Approver
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+              <div className="mt-6 flex justify-between">
+                <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                  Back to Form
+                </button>
+                <div className="flex space-x-3">
+                  <button type="button" onClick={() => navigate('/process-model-creator')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                    <Network className="-ml-1 mr-2 h-5 w-5" />
+                    Create Process Model
+                  </button>
+                  <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                    <Save className="-ml-1 mr-2 h-5 w-5" />
+                    Save Draft
+                  </button>
+                  <button type="button" onClick={handleDownloadWord} disabled={isDownloading} className={`inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E] ${isDownloading ? 'opacity-75 cursor-not-allowed' : ''}`}>
+                    {isDownloading ? <>
+                      <RotateCw className="animate-spin -ml-1 mr-2 h-5 w-5" />
+                      Generating...
+                    </> : <>
+                      <Download className="-ml-1 mr-2 h-5 w-5" />
+                      Download as Word
+                    </>}
+                  </button>
+                  <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <Send className="-ml-1 mr-2 h-5 w-5" />
+                    Send to Approver
+                  </button>
                 </div>
               </div>
-              {/* Right sidebar for comments and version history */}
-              <div className="space-y-8">
-                {/* Add CommentSection component */}
-                {document.id && <CommentSection documentId={document.id} documentContent={document.content} />}
-                {/* Add VersionHistory component */}
-                {document.id && <VersionHistory documentId={document.id} currentContent={document.content} documentTitle={formState.title} language={formState.documentLanguage} onRestoreVersion={content => {
+            </div>
+          </div>
+        </div>
+        {/* Right sidebar for comments and version history */}
+        <div className="space-y-8">
+          {/* Add CommentSection component */}
+          {document.id && <CommentSection documentId={document.id} documentContent={document.content} />}
+          {/* Add VersionHistory component */}
+          {document.id && <VersionHistory documentId={document.id} currentContent={document.content} documentTitle={formState.title} language={formState.documentLanguage} onRestoreVersion={content => {
             if (document) {
               setDocument({
                 ...document,
@@ -763,9 +843,9 @@ Please format the document using Markdown syntax.
               });
             }
           }} />}
-              </div>
-            </div>}
-      </div>
-    </div>;
+        </div>
+      </div>}
+    </div>
+  </div>;
 };
 export default DocWriter;

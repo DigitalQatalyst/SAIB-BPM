@@ -17,6 +17,7 @@ import PolicyRequestForm from './pages/PolicyRequestForm';
 import TrackRequests from './pages/TrackRequests';
 import ManageRequests from './pages/ManageRequests';
 import ApprovalRequests from './pages/ApprovalRequests';
+import ApprovalDocumentViewer from './pages/ApprovalDocumentViewer';
 import ResourceCenter from './pages/ResourceCenter';
 import Support from './pages/Support';
 import Feedback from './pages/Feedback';
@@ -48,58 +49,60 @@ const AppContent = () => {
   const isSharedDocPage = location.pathname.startsWith('/shared/');
   const showSidebar = ['/track-requests', '/manage-requests', '/approval-requests', '/resource-center', '/support', '/feedback', '/notifications', '/settings', '/docwriter', '/template', '/team', '/favorites', '/process-model-creator'].some(path => location.pathname.startsWith(path));
   return <div className="flex flex-col min-h-screen font-['Poppins']">
-      {isLandingPage ? <Navbar /> : !isSharedDocPage && <NavbarSecondary />}
-      {showSidebar && <Sidebar />}
-      <main className={`flex-grow ${!isLandingPage && !showSidebar && !isSharedDocPage ? 'pt-16' : ''} ${showSidebar ? 'pt-16 pl-64' : ''}`}>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/services" element={<ServiceMarketplace />} />
-          <Route path="/service/:id" element={<ServiceDetails />} />
-          <Route path="/service/:id/request" element={<ServiceRequestForm />} />
-          <Route path="/service/:id/policy-request" element={<PolicyRequestForm />} />
-          <Route path="/regulations" element={<RegulationsMarketplace />} />
-          <Route path="/documents" element={<DocumentsMarketplace />} />
-          <Route path="/document/:id" element={<DocumentDetails />} />
-          <Route path="/process-mining" element={<ProcessMiningMarketplace />} />
-          <Route path="/process-mining/:id" element={<ProcessMiningDetails />} />
-          <Route path="/performance-management" element={<PerformanceManagementMarketplace />} />
-          <Route path="/performance-management/:id" element={<PerformanceManagementDetails />} />
-          <Route path="/risk-management" element={<RiskManagementMarketplace />} />
-          <Route path="/risk-management/:id" element={<RiskManagementDetails />} />
-          <Route path="/track-requests" element={<TrackRequests />} />
-          <Route path="/manage-requests" element={<ManageRequests />} />
-          <Route path="/approval-requests" element={<ApprovalRequests />} />
-          <Route path="/docwriter" element={<TemplatesMarketplace />} />
-          <Route path="/template/:id" element={<TemplateDetails />} />
-          <Route path="/docwriter/create/:templateId" element={<DocWriter />} />
-          <Route path="/docwriter/:requestId" element={<DocWriter />} />
-          <Route path="/shared/:shareId" element={<SharedDocument />} />
-          <Route path="/process-model-creator" element={<ProcessModelCreator />} />
-          <Route path="/resource-center" element={<ResourceCenter />} />
-          <Route path="/support" element={<Support />} />
-          <Route path="/feedback" element={<Feedback />} />
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/team" element={<Team />} />
-          <Route path="/favorites" element={<Favorites />} />
-        </Routes>
-      </main>
-      {!isSharedDocPage && <Footer />}
-      <VoiceflowChat />
-    </div>;
+    {isLandingPage ? <Navbar /> : !isSharedDocPage && <NavbarSecondary />}
+    {showSidebar && <Sidebar />}
+    <main className={`flex-grow ${!isLandingPage && !showSidebar && !isSharedDocPage ? 'pt-16' : ''} ${showSidebar ? 'pt-16 pl-64' : ''}`}>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/services" element={<ServiceMarketplace />} />
+        <Route path="/service/:id" element={<ServiceDetails />} />
+        <Route path="/service/:id/request" element={<ServiceRequestForm />} />
+        <Route path="/service/:id/policy-request" element={<PolicyRequestForm />} />
+        <Route path="/regulations" element={<RegulationsMarketplace />} />
+        <Route path="/documents" element={<DocumentsMarketplace />} />
+        <Route path="/document/:id" element={<DocumentDetails />} />
+        <Route path="/process-mining" element={<ProcessMiningMarketplace />} />
+        <Route path="/process-mining/:id" element={<ProcessMiningDetails />} />
+        <Route path="/performance-management" element={<PerformanceManagementMarketplace />} />
+        <Route path="/performance-management/:id" element={<PerformanceManagementDetails />} />
+        <Route path="/risk-management" element={<RiskManagementMarketplace />} />
+        <Route path="/risk-management/:id" element={<RiskManagementDetails />} />
+        <Route path="/track-requests" element={<TrackRequests />} />
+        <Route path="/manage-requests" element={<ManageRequests />} />
+        <Route path="/approval-requests" element={<ApprovalRequests />} />
+        <Route path="/approval/document/:requestId" element={<ApprovalDocumentViewer />} />
+        <Route path="/docwriter" element={<TemplatesMarketplace />} />
+        <Route path="/template/:id" element={<TemplateDetails />} />
+        <Route path="/docwriter/create/:templateId" element={<DocWriter />} />
+        <Route path="/docwriter/:requestId" element={<DocWriter />} />
+        <Route path="/shared/:shareId" element={<SharedDocument />} />
+        <Route path="/process-model-creator" element={<ProcessModelCreator />} />
+        <Route path="/process-model-creator/:documentId" element={<ProcessModelCreator />} />
+        <Route path="/resource-center" element={<ResourceCenter />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/team" element={<Team />} />
+        <Route path="/favorites" element={<Favorites />} />
+      </Routes>
+    </main>
+    {!isSharedDocPage && <Footer />}
+    <VoiceflowChat />
+  </div>;
 };
 export function App() {
   return <BrowserRouter>
-      <UserProvider>
-        <DocumentProvider>
-          <LanguageProvider>
-            <ComparisonProvider>
-              <CollaborationProvider>
-                <AppContent />
-              </CollaborationProvider>
-            </ComparisonProvider>
-          </LanguageProvider>
-        </DocumentProvider>
-      </UserProvider>
-    </BrowserRouter>;
+    <UserProvider>
+      <DocumentProvider>
+        <LanguageProvider>
+          <ComparisonProvider>
+            <CollaborationProvider>
+              <AppContent />
+            </CollaborationProvider>
+          </ComparisonProvider>
+        </LanguageProvider>
+      </DocumentProvider>
+    </UserProvider>
+  </BrowserRouter>;
 }

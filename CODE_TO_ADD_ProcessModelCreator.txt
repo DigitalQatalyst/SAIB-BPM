@@ -1,0 +1,55 @@
+// Add this function to ProcessModelCreator.tsx
+// Place it BEFORE the handleSubmitForApproval function (around line 327)
+
+  const handleSaveAndLinkToDocument = async () => {
+    if (nodes.length === 0) {
+      alert('Please create a process model before saving.');
+      return;
+    }
+
+    const name = processName || prompt('Enter a name for this process model:');
+    if (!name) return;
+
+    setProcessName(name);
+
+    try {
+      // Export process model as image
+      const viewportElement = document.querySelector('.react-flow__viewport') as HTMLElement;
+      if (!viewportElement) {
+        throw new Error('Could not find process model canvas');
+      }
+
+      const imageDataUrl = await toPng(viewportElement, {
+        backgroundColor: '#ffffff',
+        width: 1024,
+        height: 768,
+      });
+
+      // Generate process model ID
+      const processModelId = uuidv4();
+
+      // Create process model data with image
+      const processModelData = {
+        id: processModelId,
+        title: name,
+        nodes,
+        edges,
+        imageDataUrl,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.name || 'Unknown',
+      };
+
+      // Save process model
+      saveProcessModel(processModelData);
+
+      // Link to document
+      if (documentId) {
+        linkProcessModelToDocument(documentId, processModelId);
+        alert(`Process model "${name}" has been saved and linked to your document!`);
+        navigate(`/docwriter/${documentId}?processModelAdded=true`);
+      }
+    } catch (err) {
+      console.error('Error saving process model:', err);
+      alert('Failed to save process model. Please try again.');
+    }
+  };

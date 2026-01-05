@@ -18,15 +18,43 @@ const SAIB_LOGO_URL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANYAAACUCAM
  * @param content Markdown content to convert
  * @param title Document title
  * @param language Document language ('english', 'arabic', or 'bilingual')
+ * @param processModelImage Optional base64 image data URL for process model diagram
  * @returns Blob of the Word document
  */
-export const generateWordDocument = async (content: string, title: string, language: string): Promise<void> => {
+export const generateWordDocument = async (
+  content: string,
+  title: string,
+  language: string,
+  processModelImage?: string
+): Promise<void> => {
   try {
     // Determine if the document is RTL, bilingual, or LTR
     const isRTL = language === 'arabic';
     const isBilingual = language === 'bilingual';
     // Process the content to identify sections, tables, etc.
     const processedContent = processMarkdownContent(content, isBilingual);
+
+    // Process model section HTML (if image provided)
+    const processModelSection = processModelImage ? `
+      <div class="page-break"></div>
+      <div class="document-header">
+        <div class="document-title-container">
+          <img src="${SAIB_LOGO_URL}" alt="SAIB Logo" class="document-logo" />
+          <div class="gold-bar"></div>
+          <div>
+            <div class="document-title">${title}</div>
+            <div class="document-title-arabic">اسم السياسة</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin: 20px;">
+        <h2>Process Flow Diagram</h2>
+        <div style="text-align: center; margin: 20px 0;">
+          <img src="${processModelImage}" alt="Process Model" style="max-width: 100%; height: auto;" />
+        </div>
+      </div>
+    ` : '';
+
     // Create the HTML document structure with improved styling
     const html = `
       <!DOCTYPE html>
@@ -270,6 +298,7 @@ export const generateWordDocument = async (content: string, title: string, langu
         <!-- Document Content -->
         <div class="page-break"></div>
         ${processedContent.html}
+        ${processModelSection}
         <!-- Approval Section -->
         <div class="page-break"></div>
         <div class="document-header">
@@ -617,13 +646,19 @@ function generateTableOfContents(processedContent: any) {
  * @param content Markdown content to convert
  * @param title Document title
  * @param language Document language ('english', 'arabic', or 'bilingual')
+ * @param processModelImage Optional base64 image data URL for process model diagram
  */
-export const generateFormattedWordDocument = async (content: string, title: string, language: string): Promise<void> => {
+export const generateFormattedWordDocument = async (
+  content: string,
+  title: string,
+  language: string,
+  processModelImage?: string
+): Promise<void> => {
   try {
     // In a real implementation, this would call a server-side API to convert
     // markdown to a properly formatted Word document with SAIB branding
     // For now, we'll use the enhanced client-side approach
-    await generateWordDocument(content, title, language);
+    await generateWordDocument(content, title, language, processModelImage);
   } catch (error) {
     console.error('Error with formatted Word conversion:', error);
     throw error;

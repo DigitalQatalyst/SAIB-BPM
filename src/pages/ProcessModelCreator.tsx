@@ -1,4 +1,5 @@
 import React, { useCallback, useState, DragEvent, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import {
   ReactFlow,
   MiniMap,
@@ -25,6 +26,7 @@ import jsPDF from 'jspdf';
 import { useUser } from '../context/UserContext';
 import { addRequest, submitForApproval } from '../services/requestTracking';
 import { v4 as uuidv4 } from 'uuid';
+import { saveProcessModel, linkProcessModelToDocument } from '../utils/processModelUtils';
 import StartEventNode from '../components/processModel/nodes/StartEventNode';
 import EndEventNode from '../components/processModel/nodes/EndEventNode';
 import TaskNode from '../components/processModel/nodes/TaskNode';
@@ -54,8 +56,9 @@ let nodeId = 2;
 
 const FlowCanvas = () => {
   const navigate = useNavigate();
+  const { documentId } = useParams<{ documentId?: string }>();
   const { screenToFlowPosition, getNodes } = useReactFlow();
-  const { userName, userEmail } = useUser();
+  const user = useUser();
   const [showExportMenu, setShowExportMenu] = useState(false);
   const [processName, setProcessName] = useState('');
 
@@ -321,6 +324,59 @@ const FlowCanvas = () => {
     setShowExportMenu(false);
   };
 
+  const handleSaveAndLinkToDocument = async () => {
+    if (nodes.length === 0) {
+      alert('Please create a process model before saving.');
+      return;
+    }
+
+    const name = processName || prompt('Enter a name for this process model:');
+    if (!name) return;
+
+    setProcessName(name);
+
+    try {
+      // Export process model as image
+      const viewportElement = document.querySelector('.react-flow__viewport') as HTMLElement;
+      if (!viewportElement) {
+        throw new Error('Could not find process model canvas');
+      }
+
+      const imageDataUrl = await toPng(viewportElement, {
+        backgroundColor: '#ffffff',
+        width: 1024,
+        height: 768,
+      });
+
+      // Generate process model ID
+      const processModelId = uuidv4();
+
+      // Create process model data with image
+      const processModelData = {
+        id: processModelId,
+        title: name,
+        nodes,
+        edges,
+        imageDataUrl,
+        createdAt: new Date().toISOString(),
+        createdBy: user?.name || 'Unknown',
+      };
+
+      // Save process model
+      saveProcessModel(processModelData);
+
+      // Link to document
+      if (documentId) {
+        linkProcessModelToDocument(documentId, processModelId);
+        alert(`Process model "${name}" has been saved and linked to your document!`);
+        navigate(`/docwriter/${documentId}?processModelAdded=true`);
+      }
+    } catch (err) {
+      console.error('Error saving process model:', err);
+      alert('Failed to save process model. Please try again.');
+    }
+  };
+
   const handleSubmitForApproval = () => {
     if (nodes.length === 0) {
       alert('Please create a process model before submitting for approval.');
@@ -343,7 +399,7 @@ const FlowCanvas = () => {
         nodes,
         edges,
         createdAt: new Date().toISOString(),
-        createdBy: userName,
+        createdBy: user?.name || 'Unknown',
       };
 
       // Store the process model in localStorage
@@ -361,8 +417,8 @@ const FlowCanvas = () => {
         serviceCategory: 'Process Modeling',
         priority: 'Medium',
         latestNote: 'Process model created and submitted for approval',
-        requester: userName,
-        requesterEmail: userEmail,
+        requester: user?.name || 'Unknown',
+        requesterEmail: user?.email || '',
         department: 'Operations',
         fullDescription: `A new process model "${name}" has been created and submitted for approval. This model contains ${nodes.length} nodes and ${edges.length} connections.`,
       });
@@ -461,13 +517,26 @@ const FlowCanvas = () => {
               )}
             </div>
 
-            <button
-              onClick={handleSubmitForApproval}
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              <Send className="-ml-1 mr-2 h-5 w-5" />
-              Submit for Approval
-            </button>
+            {/* Save & Link to Document button - appears only when coming from DocWriter */}
+            {documentId && (
+              <button
+                onClick={handleSaveAndLinkToDocument}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                <Save className="-ml-1 mr-2 h-5 w-5" />
+                Save & Return to Document
+              </button>
+            )}
+
+            {!documentId && (
+              <button
+                onClick={handleSubmitForApproval}
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              >
+                <Send className="-ml-1 mr-2 h-5 w-5" />
+                Submit for Approval
+              </button>
+            )}
           </div>
         </div>
       </div>
