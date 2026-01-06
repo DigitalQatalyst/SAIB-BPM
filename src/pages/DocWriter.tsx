@@ -134,12 +134,50 @@ const DocWriter = () => {
           setProcessModelId(refreshedModel.id);
           setProcessModelImage(refreshedModel.imageDataUrl);
           setProcessModelTitle(refreshedModel.title);
+
+          // DYNAMIC INJECTION: Add process model section to existing document
+          const existingDocument = getDocumentByRequestId(parseInt(requestId));
+          if (existingDocument && document) {
+            // Create process model section in markdown
+            const processModelSection = `\n\n## Process Flow Diagram\n\n*${refreshedModel.title}*\n\n![Process Model](process-model-placeholder)\n\n> **Note:** The process flow diagram will be automatically embedded in the generated Word document.\n\n`;
+
+            let updatedContent = document.content;
+
+            // Check if process model section already exists
+            if (!updatedContent.includes('## Process Flow Diagram')) {
+              // Find insertion point - insert before "Language Dominance" section if it exists
+              const languageDominanceIndex = updatedContent.indexOf('## Language Dominance');
+              const versionControlIndex = updatedContent.indexOf('**Document Version:**');
+
+              if (languageDominanceIndex !== -1) {
+                // Insert before Language Dominance section
+                updatedContent =
+                  updatedContent.slice(0, languageDominanceIndex) +
+                  processModelSection +
+                  updatedContent.slice(languageDominanceIndex);
+              } else if (versionControlIndex !== -1) {
+                // Insert before version control footer
+                updatedContent =
+                  updatedContent.slice(0, versionControlIndex) +
+                  processModelSection +
+                  '---\n\n' +
+                  updatedContent.slice(versionControlIndex);
+              } else {
+                // Append at end
+                updatedContent += processModelSection;
+              }
+
+              // Update document in state and storage
+              setDocument(prev => prev ? { ...prev, content: updatedContent } : null);
+              updateDocument(existingDocument.id, { content: updatedContent });
+            }
+          }
         }
         // Clean up URL
         window.history.replaceState({}, '', `/docwriter/${requestId}`);
       }
     }
-  }, [requestId]);
+  }, [requestId, document, getDocumentByRequestId, updateDocument]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const {

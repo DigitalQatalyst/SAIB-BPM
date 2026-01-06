@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle, FileEdit, UserPlus, XCircle, Zap, ExternalLink, Check, Download } from 'lucide-react';
 import { generateFormattedWordDocument } from '../../utils/wordGenerator';
 import { getProcessModelImage } from '../../utils/processModelUtils';
 import { useDocument } from '../../context/DocumentContext';
+import { getRequestById } from '../../services/requestTracking';
 interface ApprovalDetailsProps {
   requestId: number;
   onBackToList: () => void;
@@ -13,14 +14,39 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
   onBackToList
 }) => {
   const navigate = useNavigate();
-  const { getDocumentByRequestId } = useDocument();
+  const { getDocumentByRequestId, getDocumentById } = useDocument();
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
-  const [status, setStatus] = useState('Pending Approval');
-  // Mock data for the selected request
-  // Current user is Ahmed Al-Rashid
+
+  // Fetch request data from localStorage
+  const [request, setRequest] = useState(getRequestById(requestId));
+
+  // Listen for storage updates
+  useEffect(() => {
+    const handleStorageUpdate = () => {
+      setRequest(getRequestById(requestId));
+    };
+
+    window.addEventListener('requestsUpdated', handleStorageUpdate);
+    window.addEventListener('storage', handleStorageUpdate);
+
+    return () => {
+      window.removeEventListener('requestsUpdated', handleStorageUpdate);
+      window.removeEventListener('storage', handleStorageUpdate);
+    };
+  }, [requestId]);
+
+  if (!request) {
+    return <div className="text-center py-12">
+      <p className="text-gray-500 text-lg">Request not found.</p>
+      <button className="mt-4 text-[#FECC0E] hover:text-[#e6b800]" onClick={onBackToList}>
+        Back to Request List
+      </button>
+    </div>;
+  }
+
+  // Mock data for approvers - in real implementation, this would come from request or document
   const currentUser = 'Ahmed Al-Rashid';
-  // Initial approvers list with statuses
   const initialApprovers = [{
     name: 'Mohammed Al-Qahtani',
     role: 'CISO',
@@ -34,8 +60,8 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
   }, {
     name: 'Ahmed Al-Rashid',
     role: 'Risk Management Head',
-    status: 'Pending',
-    date: '-'
+    status: request.status === 'Approved' || request.status === 'Completed' ? 'Approved' : 'Pending',
+    date: request.status === 'Approved' || request.status === 'Completed' ? new Date().toISOString().split('T')[0] : '-'
   }, {
     name: 'Noura Al-Zahrani',
     role: 'Compliance Head',
@@ -43,99 +69,37 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
     date: '-'
   }];
   const [approvers, setApprovers] = useState(initialApprovers);
-  // Mock data for the selected request
-  const request = {
-    id: requestId,
-    ticketNumber: `REQ-2024-00${requestId}`,
-    dateCreated: '2024-03-15',
-    requestType: 'Policy',
-    requestDetail: 'Information Security Policy Update',
-    fullDescription: 'Updated Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements. The update includes new sections on multi-factor authentication, cloud security standards, and incident response procedures.',
-    department: 'IT Security',
-    requester: 'Khalid Al-Otaibi',
-    requesterEmail: 'khalid.alotaibi@saib.com.sa',
-    requesterPhone: '+966 11 123 4567',
-    slaTargetDate: '2024-03-30',
-    priority: 'High',
-    status: status,
-    assignedTo: 'Mohammed Al-Qahtani',
-    justification: 'The Saudi Central Bank (SAMA) has issued new cybersecurity framework requirements that must be incorporated into our Information Security Policy by the end of the quarter.',
-    sourceOfRequest: 'Regulatory Requirement',
-    category: 'Information Security',
-    documentType: 'Policy',
-    documentLink: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf',
-    approvers: approvers,
-    attachments: [{
-      name: 'SAMA Circular 41-54321.pdf',
-      type: 'PDF',
-      size: '3.5 MB',
-      uploadedBy: 'Khalid Al-Otaibi',
-      date: '2024-03-15'
-    }, {
-      name: 'Current Information Security Policy.docx',
-      type: 'DOCX',
-      size: '2.8 MB',
-      uploadedBy: 'System',
-      date: '2024-03-15'
-    }],
-    timeline: [{
-      date: '2024-03-15 13:15',
-      event: 'Request submitted',
-      user: 'Khalid Al-Otaibi',
-      icon: FileText
-    }, {
-      date: '2024-03-15 15:30',
-      event: 'Request assigned to Mohammed Al-Qahtani',
-      user: 'System',
-      icon: User
-    }, {
-      date: '2024-03-16 11:20',
-      event: 'Policy review initiated',
-      user: 'Mohammed Al-Qahtani',
-      icon: FileText
-    }, {
-      date: '2024-03-20 14:45',
-      event: 'Document generated and sent for approval',
-      user: 'Mohammed Al-Qahtani',
-      icon: FileEdit
-    }, {
-      date: '2024-03-20 16:30',
-      event: 'Approved by Mohammed Al-Qahtani',
-      user: 'Mohammed Al-Qahtani',
-      icon: CheckCircle
-    }, {
-      date: '2024-03-22 10:15',
-      event: 'Approved by Khalid Al-Otaibi',
-      user: 'Khalid Al-Otaibi',
-      icon: CheckCircle
-    }]
-  };
-  if (!request) {
-    return <div className="text-center py-12">
-      <p className="text-gray-500 text-lg">Request not found.</p>
-      <button className="mt-4 text-[#FECC0E] hover:text-[#e6b800]" onClick={onBackToList}>
-        Back to Request List
-      </button>
-    </div>;
-  }
+
+  // Get the actual document for this request - try both methods
+  const [requestDocument, setRequestDocument] = useState<any>(null);
+
+  useEffect(() => {
+    // First try using documentId if it exists
+    let doc = request.documentId ? getDocumentById(request.documentId) : null;
+
+    // Fallback: try getting by requestId
+    if (!doc) {
+      doc = getDocumentByRequestId(requestId);
+    }
+
+    setRequestDocument(doc);
+  }, [request, request.documentId, requestId, getDocumentById, getDocumentByRequestId]);
 
   // Download document with process model
   const handleDownloadDocument = async () => {
     try {
-      // Get the document from the request ID
-      const document = getDocumentByRequestId(requestId);
-      if (!document) {
-        alert('Document not found');
+      if (!requestDocument) {
+        alert('Document not found for this request');
         return;
       }
 
       // Get process model image if it exists
-      const processImage = getProcessModelImage(document.id) || undefined;
+      const processImage = getProcessModelImage(requestDocument.id) || undefined;
 
       // Generate Word document with process model
       await generateFormattedWordDocument(
-        document.content,
-        document.title || request.requestDetail,
+        requestDocument.content,
+        requestDocument.title || request.requestDetail,
         'english', // Default language
         processImage
       );
@@ -184,21 +148,23 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
       date: today
     } : approver);
     setApprovers(updatedApprovers);
-    // Add to timeline
-    request.timeline.push({
-      date: new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }).replace(',', ''),
-      event: `Approved by ${currentUser}`,
-      user: currentUser,
-      icon: CheckCircle
-    });
-    setStatus('Approved');
+    // Add to timeline if supported
+    if ((request as any).timeline) {
+      (request as any).timeline.push({
+        date: new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(',', ''),
+        event: `Approved by ${currentUser}`,
+        user: currentUser,
+        icon: CheckCircle
+      });
+    }
+    // Update request status (simplified, no setStatus call needed)
     setShowApproveConfirm(false);
     // In a real app, this would make an API call to update the request status
   };
@@ -211,21 +177,23 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
       date: today
     } : approver);
     setApprovers(updatedApprovers);
-    // Add to timeline
-    request.timeline.push({
-      date: new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-      }).replace(',', ''),
-      event: `Rejected by ${currentUser}`,
-      user: currentUser,
-      icon: XCircle
-    });
-    setStatus('Rejected');
+    // Add to timeline if supported
+    if ((request as any).timeline) {
+      (request as any).timeline.push({
+        date: new Date().toLocaleString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: false
+        }).replace(',', ''),
+        event: `Rejected by ${currentUser}`,
+        user: currentUser,
+        icon: XCircle
+      });
+    }
+    // Update request status (simplified, no setStatus call needed)
     setShowRejectConfirm(false);
     // In a real app, this would make an API call to update the request status
   };
@@ -264,7 +232,13 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             </button>
           </>}
           <a
-            href={request.documentLink}
+            href={requestDocument ? `/docwriter/${request.id}` : '#'}
+            onClick={(e) => {
+              if (!requestDocument) {
+                e.preventDefault();
+                alert('No document has been generated for this request yet');
+              }
+            }}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -294,7 +268,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             <dd className="mt-1 text-sm text-gray-900">
               <div className="font-medium">{request.requester}</div>
               <div className="text-gray-500">{request.requesterEmail}</div>
-              <div className="text-gray-500">{request.requesterPhone}</div>
+              {(request as any).requesterPhone && <div className="text-gray-500">{(request as any).requesterPhone}</div>}
             </dd>
           </div>
           <div className="sm:col-span-1">
@@ -338,12 +312,12 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
               Source of Request
             </dt>
             <dd className="mt-1 text-sm text-gray-900">
-              {request.sourceOfRequest}
+              {(request as any).sourceOfRequest || 'Not specified'}
             </dd>
           </div>
           <div className="sm:col-span-1">
             <dt className="text-sm font-medium text-gray-500">Category</dt>
-            <dd className="mt-1 text-sm text-gray-900">{request.category}</dd>
+            <dd className="mt-1 text-sm text-gray-900">{request.serviceCategory || 'Not specified'}</dd>
           </div>
         </dl>
       </div>
@@ -363,7 +337,16 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
                 {request.requestDetail} Document
               </span>
             </div>
-            <a href={request.documentLink} target="_blank" rel="noopener noreferrer" className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150">
+            <a
+              href={requestDocument ? `/docwriter/${request.id}` : '#'}
+              onClick={(e) => {
+                if (!requestDocument) {
+                  e.preventDefault();
+                  alert('No document has been generated for this request yet');
+                }
+              }}
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150"
+            >
               <ExternalLink size={16} className="mr-1" />
               Open Document
             </a>
@@ -433,9 +416,9 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         <h4 className="text-lg font-medium text-gray-900">Timeline</h4>
         <div className="flow-root mt-4">
           <ul className="-mb-8">
-            {request.timeline.map((event, index) => <li key={index}>
+            {(request as any).timeline?.map((event: any, index: number) => <li key={index}>
               <div className="relative pb-8">
-                {index !== request.timeline.length - 1 ? <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span> : null}
+                {index !== ((request as any).timeline?.length || 0) - 1 ? <span className="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span> : null}
                 <div className="relative flex space-x-3">
                   <div>
                     <span className="h-8 w-8 rounded-full flex items-center justify-center bg-gray-100">
