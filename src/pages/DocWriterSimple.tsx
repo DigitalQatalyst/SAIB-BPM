@@ -61,12 +61,12 @@ const DocWriterSimple = () => {
     if (requestId) {
       const requestData = {
         id: parseInt(requestId),
-        title: 'Update Information Security Policy',
-        category: 'Information Security',
+        title: 'Updated Rule for Section 2.3 (Forms Rules)',
+        category: 'Forms & Compliance',
         justification:
-          'The Saudi Central Bank (SAMA) has issued new cybersecurity framework requirements.',
+          'The Saudi Central Bank (SAMA) has issued new circulars regarding customer signatures and forms requirements.',
         sourceOfRequest: 'Regulatory Requirement',
-        department: 'IT Security',
+        department: 'Compliance',
       };
 
       const existingDocument = getDocumentByRequestId(parseInt(requestId));
@@ -127,16 +127,16 @@ const DocWriterSimple = () => {
     }
   };
 
-  // Generate document - INSTANT with hardcoded content
+  // Generate document - 5 seconds with hardcoded content
   const handleGenerateDocument = async () => {
     setIsGenerating(true);
     setError(null);
 
     try {
-      console.log('[POC] Generating document instantly...');
+      console.log('[POC] Generating document...');
       
-      // Show generating state for just 1 second for visual feedback
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Show generating state for 3 seconds to simulate AI processing
+      await new Promise(resolve => setTimeout(resolve, 3000));
       
       // Get hardcoded SAMA content
       const generatedContent = getMockFullDocument();
