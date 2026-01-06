@@ -35,7 +35,7 @@ import { DocumentProvider } from './context/DocumentContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ComparisonProvider } from './context/ComparisonContext';
 import { CollaborationProvider } from './context/CollaborationContext';
-import DocWriter from './pages/DocWriter';
+import DocWriter from './pages/DocWriterSimple';
 import TemplatesMarketplace from './pages/TemplatesMarketplace';
 import TemplateDetails from './pages/TemplateDetails';
 import SharedDocument from './pages/SharedDocument';
