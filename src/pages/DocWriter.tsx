@@ -721,7 +721,7 @@ Please format the document using Markdown syntax.
               <div className="flex space-x-3">
                 <button
                   type="button"
-                  onClick={() => window.open('https://statics.teams.cdn.office.net/evergreen-assets/safelinks/2/atp-safelinks.html', '_blank')}
+                  onClick={() => window.open('https://arqitek-ae.avolutionsoftware.com/Browser/?p=Content%2FDiagrams%2F8258307.html', '_blank')}
                   className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]"
                 >
                   <Network className="-ml-0.5 mr-2 h-4 w-4" />
@@ -842,7 +842,7 @@ Please format the document using Markdown syntax.
                   Back to Form
                 </button>
                 <div className="flex space-x-3">
-                  <button type="button" onClick={() => window.open('https://statics.teams.cdn.office.net/evergreen-assets/safelinks/2/atp-safelinks.html', '_blank')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                  <button type="button" onClick={() => window.open('https://arqitek-ae.avolutionsoftware.com/Browser/?p=Content%2FDiagrams%2F8258307.html', '_blank')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
                     <Network className="-ml-1 mr-2 h-5 w-5" />
                     Amend Process Model
                   </button>
