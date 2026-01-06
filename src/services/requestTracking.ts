@@ -49,7 +49,7 @@ const updateExistingRequestsWithUrls = () => {
   const updatedRequests = requests.map(request => {
     if (request.attachments) {
       const updatedAttachments = request.attachments.map(attachment => {
-        if (attachment.name === '2507_SAIB BP&P Procedure_V2.7' && !attachment.url) {
+        if (attachment.name === 'Business Processes and Procedures Manual' && !attachment.url) {
           return { ...attachment, url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz' };
         }
         if (attachment.name === 'SAMA_EN_10831_VER1' && !attachment.url) {
@@ -210,7 +210,7 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
       fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.',
       attachments: [
         {
-          name: '2507_SAIB BP&P Procedure_V2.7',
+          name: 'Business Processes and Procedures Manual',
           type: 'DOCX',
           size: '2.1 MB',
           uploadedBy: 'Salem Doe',
@@ -266,7 +266,7 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
       fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.',
       attachments: [
         {
-          name: '2507_SAIB BP&P Procedure_V2.7',
+          name: 'Business Processes and Procedures Manual',
           type: 'DOCX',
           size: '2.1 MB',
           uploadedBy: 'Salem Doe',
@@ -467,7 +467,7 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
       // Add default attachments to every request
       attachments: [
         {
-          name: '2507_SAIB BP&P Procedure_V2.7',
+          name: 'Business Processes and Procedures Manual',
           type: 'DOCX',
           size: '2.1 MB',
           uploadedBy: 'Salem Doe',
