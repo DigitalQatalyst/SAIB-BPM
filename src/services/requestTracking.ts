@@ -25,10 +25,18 @@ export interface RequestItem {
     date: string;
   }>;
 }
+// Notification tracking interface
+export interface RequestNotification {
+  requestId: number;
+  viewedBy: string[]; // Array of usernames who have viewed this request
+  createdAt: string;
+}
 // Storage key
 const STORAGE_KEY = 'serviceRequests';
 // Storage key for documents
 const DOCUMENTS_STORAGE_KEY = 'generatedDocuments';
+// Storage key for notifications
+const NOTIFICATIONS_STORAGE_KEY = 'requestNotifications';
 // Initialize localStorage with mock data if empty
 const initializeStorage = () => {
   if (!localStorage.getItem(STORAGE_KEY)) {
@@ -152,108 +160,108 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
       localStorage.setItem(DOCUMENTS_STORAGE_KEY, JSON.stringify(mockDocuments));
     }
     const initialRequests: RequestItem[] = [
-    // Original mock requests for P&P team
-    {
-      id: 1,
-      ticketNumber: 'REQ-2023-001',
-      dateCreated: '2023-09-15',
-      requestType: 'Policy Request',
-      requestDetail: 'Update Information Security Policy',
-      serviceName: 'Policy: Information Security Policy',
-      serviceCategory: 'Policy Management',
-      slaTargetDate: '2023-09-25',
-      priority: 'High',
-      status: 'In Progress',
-      latestNote: 'Request assigned to team member',
-      requester: 'Salem Doe',
-      requesterEmail: 'salem.doe@saib.com',
-      department: 'Treasury',
-      assignedTo: 'Khalid Al-Otaibi',
-      fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.'
-    }, {
-      id: 2,
-      ticketNumber: 'REQ-2023-002',
-      dateCreated: '2023-09-10',
-      requestType: 'Policy Request',
-      requestDetail: 'Revise Corporate Governance Policy',
-      serviceName: 'Policy: Corporate Governance Policy',
-      serviceCategory: 'Policy Management',
-      slaTargetDate: '2023-09-28',
-      priority: 'Medium',
-      status: 'In Progress',
-      latestNote: 'Document in review process',
-      requester: 'Fatima Al-Harbi',
-      requesterEmail: 'fatima.alharbi@saib.com',
-      department: 'Legal',
-      assignedTo: 'Khalid Al-Otaibi',
-      fullDescription: 'Update needed to align with new regulatory requirements from Capital Market Authority.'
-    },
-    // Add completed mock requests for Salem Doe
-    {
-      id: 3,
-      ticketNumber: 'REQ-2023-003',
-      dateCreated: '2023-08-05',
-      requestType: 'Policy Request',
-      requestDetail: 'Treasury Operations Manual Update',
-      serviceName: 'Policy: Treasury Operations Manual',
-      serviceCategory: 'Policy Management',
-      slaTargetDate: '2023-08-15',
-      priority: 'Medium',
-      status: 'Completed',
-      latestNote: 'Document published and request completed',
-      requester: 'Salem Doe',
-      requesterEmail: 'salem.doe@saib.com',
-      department: 'Treasury',
-      assignedTo: 'Khalid Al-Otaibi',
-      fullDescription: 'Update the Treasury Operations Manual to include new FX transaction limits and procedures for money market placements.',
-      documentId: treasuryOpDocId,
-      approvalStatus: 'Approved',
-      approverComments: [{
-        approver: 'Mohammed Al-Qahtani',
-        comment: 'Approved: The updated manual provides clear guidance on transaction limits and procedures.',
-        date: '2023-08-12'
+      // Original mock requests for P&P team
+      {
+        id: 1,
+        ticketNumber: 'REQ-2023-001',
+        dateCreated: '2023-09-15',
+        requestType: 'Policy Request',
+        requestDetail: 'Update Information Security Policy',
+        serviceName: 'Policy: Information Security Policy',
+        serviceCategory: 'Policy Management',
+        slaTargetDate: '2023-09-25',
+        priority: 'High',
+        status: 'In Progress',
+        latestNote: 'Request assigned to team member',
+        requester: 'Salem Doe',
+        requesterEmail: 'salem.doe@saib.com',
+        department: 'Treasury',
+        assignedTo: 'Khalid Al-Otaibi',
+        fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.'
       }, {
-        approver: 'Ahmed Al-Mansour',
-        comment: 'Approved: Well structured and comprehensive. All requirements have been addressed.',
-        date: '2023-08-13'
+        id: 2,
+        ticketNumber: 'REQ-2023-002',
+        dateCreated: '2023-09-10',
+        requestType: 'Policy Request',
+        requestDetail: 'Revise Corporate Governance Policy',
+        serviceName: 'Policy: Corporate Governance Policy',
+        serviceCategory: 'Policy Management',
+        slaTargetDate: '2023-09-28',
+        priority: 'Medium',
+        status: 'In Progress',
+        latestNote: 'Document in review process',
+        requester: 'Fatima Al-Harbi',
+        requesterEmail: 'fatima.alharbi@saib.com',
+        department: 'Legal',
+        assignedTo: 'Khalid Al-Otaibi',
+        fullDescription: 'Update needed to align with new regulatory requirements from Capital Market Authority.'
+      },
+      // Add completed mock requests for Salem Doe
+      {
+        id: 3,
+        ticketNumber: 'REQ-2023-003',
+        dateCreated: '2023-08-05',
+        requestType: 'Policy Request',
+        requestDetail: 'Treasury Operations Manual Update',
+        serviceName: 'Policy: Treasury Operations Manual',
+        serviceCategory: 'Policy Management',
+        slaTargetDate: '2023-08-15',
+        priority: 'Medium',
+        status: 'Completed',
+        latestNote: 'Document published and request completed',
+        requester: 'Salem Doe',
+        requesterEmail: 'salem.doe@saib.com',
+        department: 'Treasury',
+        assignedTo: 'Khalid Al-Otaibi',
+        fullDescription: 'Update the Treasury Operations Manual to include new FX transaction limits and procedures for money market placements.',
+        documentId: treasuryOpDocId,
+        approvalStatus: 'Approved',
+        approverComments: [{
+          approver: 'Mohammed Al-Qahtani',
+          comment: 'Approved: The updated manual provides clear guidance on transaction limits and procedures.',
+          date: '2023-08-12'
+        }, {
+          approver: 'Ahmed Al-Mansour',
+          comment: 'Approved: Well structured and comprehensive. All requirements have been addressed.',
+          date: '2023-08-13'
+        }, {
+          approver: 'Fatima Al-Harbi',
+          comment: 'Approved: Final approval granted. This document is ready for publication.',
+          date: '2023-08-14'
+        }]
       }, {
-        approver: 'Fatima Al-Harbi',
-        comment: 'Approved: Final approval granted. This document is ready for publication.',
-        date: '2023-08-14'
-      }]
-    }, {
-      id: 4,
-      ticketNumber: 'REQ-2023-004',
-      dateCreated: '2023-07-12',
-      requestType: 'Procedure Request',
-      requestDetail: 'Interbank Transfer Procedures',
-      serviceName: 'Procedure: Interbank Transfer Procedures',
-      serviceCategory: 'Procedure Management',
-      slaTargetDate: '2023-07-22',
-      priority: 'High',
-      status: 'Completed',
-      latestNote: 'Document published and request completed',
-      requester: 'Salem Doe',
-      requesterEmail: 'salem.doe@saib.com',
-      department: 'Treasury',
-      assignedTo: 'Khalid Al-Otaibi',
-      fullDescription: 'Create a new procedure document for interbank transfers that includes enhanced security measures and approval workflows.',
-      documentId: interbankDocId,
-      approvalStatus: 'Approved',
-      approverComments: [{
-        approver: 'Mohammed Al-Qahtani',
-        comment: 'Approved: The security measures are comprehensive and meet our requirements.',
-        date: '2023-07-17'
-      }, {
-        approver: 'Ahmed Al-Mansour',
-        comment: 'Approved: The approval matrix is clear and appropriate for our risk profile.',
-        date: '2023-07-18'
-      }, {
-        approver: 'Fatima Al-Harbi',
-        comment: 'Approved: This document provides excellent guidance for secure interbank transfers.',
-        date: '2023-07-19'
-      }]
-    }];
+        id: 4,
+        ticketNumber: 'REQ-2023-004',
+        dateCreated: '2023-07-12',
+        requestType: 'Procedure Request',
+        requestDetail: 'Interbank Transfer Procedures',
+        serviceName: 'Procedure: Interbank Transfer Procedures',
+        serviceCategory: 'Procedure Management',
+        slaTargetDate: '2023-07-22',
+        priority: 'High',
+        status: 'Completed',
+        latestNote: 'Document published and request completed',
+        requester: 'Salem Doe',
+        requesterEmail: 'salem.doe@saib.com',
+        department: 'Treasury',
+        assignedTo: 'Khalid Al-Otaibi',
+        fullDescription: 'Create a new procedure document for interbank transfers that includes enhanced security measures and approval workflows.',
+        documentId: interbankDocId,
+        approvalStatus: 'Approved',
+        approverComments: [{
+          approver: 'Mohammed Al-Qahtani',
+          comment: 'Approved: The security measures are comprehensive and meet our requirements.',
+          date: '2023-07-17'
+        }, {
+          approver: 'Ahmed Al-Mansour',
+          comment: 'Approved: The approval matrix is clear and appropriate for our risk profile.',
+          date: '2023-07-18'
+        }, {
+          approver: 'Fatima Al-Harbi',
+          comment: 'Approved: This document provides excellent guidance for secure interbank transfers.',
+          date: '2023-07-19'
+        }]
+      }];
     localStorage.setItem(STORAGE_KEY, JSON.stringify(initialRequests));
   }
 };
@@ -457,12 +465,21 @@ export const startWorkOnRequest = (requestId: number, assignedTo: string): Reque
 // Submit document for approval (P&P Team generates document)
 export const submitForApproval = (requestId: number, documentId: string): RequestItem | undefined => {
   console.log(`submitForApproval: Submitting request ${requestId} for approval with document ${documentId}`);
-  return updateRequest(requestId, {
+
+  const request = updateRequest(requestId, {
     documentId,
     status: 'In Progress',
     approvalStatus: 'In Review',
     latestNote: 'Document generated and submitted for approval'
   });
+
+  // Automatically mark as read for the P&P team member who submitted it
+  if (request && request.assignedTo) {
+    markRequestAsRead(requestId, request.assignedTo);
+    console.log(`submitForApproval: Marked request ${requestId} as read for ${request.assignedTo}`);
+  }
+
+  return request;
 };
 
 // Approve a request (Approver approves)
@@ -479,12 +496,20 @@ export const approveRequest = (requestId: number, approver: string, comment?: st
 
   const approverComments = request.approverComments || [];
 
-  return updateRequest(requestId, {
+  const updatedRequest = updateRequest(requestId, {
     approverComments: newComment ? [...approverComments, newComment] : approverComments,
     approvalStatus: 'Approved',
     status: 'Approved',
     latestNote: `Approved by ${approver}`
   });
+
+  // Automatically mark as read for the approver who approved it
+  if (updatedRequest) {
+    markRequestAsRead(requestId, approver);
+    console.log(`approveRequest: Marked request ${requestId} as read for ${approver}`);
+  }
+
+  return updatedRequest;
 };
 
 // Request changes (Approver requests revision)
@@ -523,11 +548,19 @@ export const rejectRequest = (requestId: number, approver: string, comment: stri
 
   const approverComments = request.approverComments || [];
 
-  return updateRequest(requestId, {
+  const updatedRequest = updateRequest(requestId, {
     approverComments: [...approverComments, newComment],
     status: 'Rejected',
     latestNote: `Rejected by ${approver}`
   });
+
+  // Automatically mark as read for the approver who rejected it
+  if (updatedRequest) {
+    markRequestAsRead(requestId, approver);
+    console.log(`rejectRequest: Marked request ${requestId} as read for ${approver}`);
+  }
+
+  return updatedRequest;
 };
 
 // Delete a request
@@ -606,4 +639,199 @@ export const getDocumentById = (documentId: string) => {
 export const getDocumentByRequestId = (requestId: number) => {
   const documents = getGeneratedDocuments();
   return documents.find((doc: any) => doc.requestId === requestId);
+};
+
+// ========== Notification Tracking Functions ==========
+
+// Get all notifications from localStorage
+const getNotifications = (): RequestNotification[] => {
+  try {
+    const notifications = localStorage.getItem(NOTIFICATIONS_STORAGE_KEY);
+    return notifications ? JSON.parse(notifications) : [];
+  } catch (error) {
+    console.error('Error retrieving notifications from localStorage:', error);
+    return [];
+  }
+};
+
+// Save notifications to localStorage
+const saveNotifications = (notifications: RequestNotification[]): void => {
+  try {
+    localStorage.setItem(NOTIFICATIONS_STORAGE_KEY, JSON.stringify(notifications));
+    // Dispatch custom event to notify UI of notification changes
+    window.dispatchEvent(new CustomEvent('requestNotificationsUpdated'));
+  } catch (error) {
+    console.error('Error saving notifications to localStorage:', error);
+  }
+};
+
+// Get or create notification for a request
+const getOrCreateNotification = (requestId: number): RequestNotification => {
+  const notifications = getNotifications();
+  let notification = notifications.find(n => n.requestId === requestId);
+
+  if (!notification) {
+    notification = {
+      requestId,
+      viewedBy: [],
+      createdAt: new Date().toISOString()
+    };
+    notifications.push(notification);
+    saveNotifications(notifications);
+  }
+
+  return notification;
+};
+
+// Get count of unread requests for a user (P&P team member)
+export const getUnreadRequestCount = (userName: string): number => {
+  try {
+    const requests = getRequests();
+    const notifications = getNotifications();
+
+    // Filter pending requests that haven't been viewed by this user
+    const unreadCount = requests.filter(request => {
+      // Only count pending or in-progress requests
+      if (request.status !== 'Pending' && request.status !== 'In Progress') {
+        return false;
+      }
+
+      // Check if user has viewed this request
+      const notification = notifications.find(n => n.requestId === request.id);
+      if (!notification) {
+        // No notification record means it's unread
+        return true;
+      }
+
+      // Check if this user is in the viewedBy list
+      return !notification.viewedBy.includes(userName);
+    });
+
+    console.log(`getUnreadRequestCount for ${userName}: ${unreadCount.length} unread requests`);
+    return unreadCount.length;
+  } catch (error) {
+    console.error('Error getting unread request count:', error);
+    return 0;
+  }
+};
+
+// Mark a request as read by a user
+export const markRequestAsRead = (requestId: number, userName: string): void => {
+  try {
+    const notifications = getNotifications();
+    let notification = notifications.find(n => n.requestId === requestId);
+
+    if (!notification) {
+      notification = {
+        requestId,
+        viewedBy: [userName],
+        createdAt: new Date().toISOString()
+      };
+      notifications.push(notification);
+    } else if (!notification.viewedBy.includes(userName)) {
+      notification.viewedBy.push(userName);
+    }
+
+    saveNotifications(notifications);
+    console.log(`markRequestAsRead: Request ${requestId} marked as read by ${userName}`);
+  } catch (error) {
+    console.error('Error marking request as read:', error);
+  }
+};
+
+// Mark all current requests as read by a user
+export const markAllRequestsAsRead = (userName: string): void => {
+  try {
+    const requests = getRequests();
+    requests.forEach(request => {
+      markRequestAsRead(request.id, userName);
+    });
+    console.log(`markAllRequestsAsRead: All requests marked as read by ${userName}`);
+  } catch (error) {
+    console.error('Error marking all requests as read:', error);
+  }
+};
+
+// Get all unread requests for a user
+export const getUnreadRequests = (userName: string): RequestItem[] => {
+  try {
+    const requests = getRequests();
+    const notifications = getNotifications();
+
+    return requests.filter(request => {
+      // Only include pending or in-progress requests
+      if (request.status !== 'Pending' && request.status !== 'In Progress') {
+        return false;
+      }
+
+      const notification = notifications.find(n => n.requestId === request.id);
+      if (!notification) {
+        return true;
+      }
+
+      return !notification.viewedBy.includes(userName);
+    });
+  } catch (error) {
+    console.error('Error getting unread requests:', error);
+    return [];
+  }
+};
+
+// ========== Approver Notification Functions ==========
+
+// Get count of unread approval requests for an Approver
+export const getUnreadApprovalCount = (userName: string): number => {
+  try {
+    const requests = getRequests();
+    const notifications = getNotifications();
+
+    // Filter requests that are in review and haven't been viewed by this approver
+    const unreadCount = requests.filter(request => {
+      // Only count requests that are in review status
+      if (request.approvalStatus !== 'In Review') {
+        return false;
+      }
+
+      // Check if user has viewed this request
+      const notification = notifications.find(n => n.requestId === request.id);
+      if (!notification) {
+        // No notification record means it's unread
+        return true;
+      }
+
+      // Check if this user is in the viewedBy list
+      return !notification.viewedBy.includes(userName);
+    });
+
+    console.log(`getUnreadApprovalCount for ${userName}: ${unreadCount.length} unread approvals`);
+    return unreadCount.length;
+  } catch (error) {
+    console.error('Error getting unread approval count:', error);
+    return 0;
+  }
+};
+
+// Get all unread approval requests for an Approver
+export const getUnreadApprovals = (userName: string): RequestItem[] => {
+  try {
+    const requests = getRequests();
+    const notifications = getNotifications();
+
+    return requests.filter(request => {
+      // Only include requests that are in review
+      if (request.approvalStatus !== 'In Review') {
+        return false;
+      }
+
+      const notification = notifications.find(n => n.requestId === request.id);
+      if (!notification) {
+        return true;
+      }
+
+      return !notification.viewedBy.includes(userName);
+    });
+  } catch (error) {
+    console.error('Error getting unread approvals:', error);
+    return [];
+  }
 };
