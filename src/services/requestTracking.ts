@@ -24,11 +24,49 @@ export interface RequestItem {
     comment: string;
     date: string;
   }>;
+  attachments?: Array<{
+    name: string;
+    type: string;
+    size: string;
+    uploadedBy: string;
+    date: string;
+    url?: string; // Optional URL for download link
+    icon?: string; // Optional icon path
+  }>;
 }
 // Storage key
 const STORAGE_KEY = 'serviceRequests';
 // Storage key for documents
 const DOCUMENTS_STORAGE_KEY = 'generatedDocuments';
+
+// Force clear storage for development - this will clear old data and load correct PDF URL
+localStorage.clear(); // Clear everything
+console.log('All localStorage cleared - correct PDF URL will be loaded');
+
+// Function to update existing requests with proper URLs
+const updateExistingRequestsWithUrls = () => {
+  const requests = getRequests();
+  const updatedRequests = requests.map(request => {
+    if (request.attachments) {
+      const updatedAttachments = request.attachments.map(attachment => {
+        if (attachment.name === '2507_SAIB BP&P Procedure_V2.7' && !attachment.url) {
+          return { ...attachment, url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz' };
+        }
+        if (attachment.name === 'SAMA_EN_10831_VER1' && !attachment.url) {
+          return { ...attachment, url: 'https://arqitek.sharepoint.com/:b:/s/DELSAIBBPM4.0/IQDj2HBSKMCcRKYd85fAaSA4AVMHoNQzt-ZIkziCvmTR8Jo?e=ijFWr5' };
+        }
+        return attachment;
+      });
+      return { ...request, attachments: updatedAttachments };
+    }
+    return request;
+  });
+  
+  if (updatedRequests.length > 0) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedRequests));
+    console.log('Updated existing requests with URLs');
+  }
+};
 // Initialize localStorage with mock data if empty
 const initializeStorage = () => {
   if (!localStorage.getItem(STORAGE_KEY)) {
@@ -169,7 +207,27 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
       requesterEmail: 'salem.doe@saib.com',
       department: 'Treasury',
       assignedTo: 'Khalid Al-Otaibi',
-      fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.'
+      fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.',
+      attachments: [
+        {
+          name: '2507_SAIB BP&P Procedure_V2.7',
+          type: 'DOCX',
+          size: '2.1 MB',
+          uploadedBy: 'System',
+          date: '2023-09-15',
+          url: '',
+          icon: '/microsoft-word-icon.webp'
+        },
+        {
+          name: 'SAMA_EN_10831_VER1.pdf',
+          type: 'PDF',
+          size: '1.8 MB',
+          uploadedBy: 'System',
+          date: '2023-09-15',
+          url: '',
+          icon: '/PDF_file_icon.svg.png'
+        }
+      ]
     }, {
       id: 2,
       ticketNumber: 'REQ-2023-002',
@@ -187,6 +245,45 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
       department: 'Legal',
       assignedTo: 'Khalid Al-Otaibi',
       fullDescription: 'Update needed to align with new regulatory requirements from Capital Market Authority.'
+    },
+    // Add the specific request from the screenshot
+    {
+      id: 42,
+      ticketNumber: 'REQ-2023-042',
+      dateCreated: '2023-09-15',
+      requestType: 'Policy Request',
+      requestDetail: 'Update Information Security Policy',
+      serviceName: 'Policy: Update Information Security Policy',
+      serviceCategory: 'Policy Management',
+      slaTargetDate: '2023-09-25',
+      priority: 'High',
+      status: 'In Progress',
+      latestNote: 'Request assigned to team member',
+      requester: 'Salem Doe',
+      requesterEmail: 'salem.doe@saib.com',
+      department: 'Treasury',
+      assignedTo: 'Khalid Al-Otaibi',
+      fullDescription: 'Need to update the Information Security Policy to incorporate new SAMA Cybersecurity Framework requirements.',
+      attachments: [
+        {
+          name: '2507_SAIB BP&P Procedure_V2.7',
+          type: 'DOCX',
+          size: '2.1 MB',
+          uploadedBy: 'System',
+          date: '2023-09-15',
+          url: '',
+          icon: '/microsoft-word-icon.webp'
+        },
+        {
+          name: 'SAMA_EN_10831_VER1.pdf',
+          type: 'PDF',
+          size: '1.8 MB',
+          uploadedBy: 'System',
+          date: '2023-09-15',
+          url: '',
+          icon: '/PDF_file_icon.svg.png'
+        }
+      ]
     },
     // Add completed mock requests for Salem Doe
     {
@@ -259,6 +356,18 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
 };
 // Call initialization
 initializeStorage();
+
+// Update existing requests with URLs
+setTimeout(() => {
+  updateExistingRequestsWithUrls();
+}, 100);
+
+// Force clear storage for development (remove this in production)
+export const clearStorageForDevelopment = () => {
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(DOCUMENTS_STORAGE_KEY);
+  initializeStorage();
+};
 // Get all requests from localStorage
 export const getRequests = (): RequestItem[] => {
   try {
@@ -344,7 +453,7 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
         targetDate.setDate(targetDate.getDate() + 7);
     }
     const slaTargetDate = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD format
-    // Create the new request object
+    // Create the new request object with default attachments
     const newRequest: RequestItem = {
       id,
       ticketNumber,
@@ -355,6 +464,27 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
       // Auto-assign to P&P team member
       approvalStatus: 'Not Started',
       approverComments: [],
+      // Add default attachments to every request
+      attachments: [
+        {
+          name: '2507_SAIB BP&P Procedure_V2.7',
+          type: 'DOCX',
+          size: '2.1 MB',
+          uploadedBy: 'System',
+          date: dateCreated,
+          url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz',
+          icon: '/microsoft-word-icon.webp'
+        },
+        {
+          name: 'SAMA_EN_10831_VER1',
+          type: 'PDF',
+          size: '1.8 MB',
+          uploadedBy: 'System',
+          date: dateCreated,
+          url: 'https://arqitek.sharepoint.com/:b:/s/DELSAIBBPM4.0/IQDj2HBSKMCcRKYd85fAaSA4AVMHoNQzt-ZIkziCvmTR8Jo?e=ijFWr5',
+          icon: '/PDF_file_icon.svg.png'
+        }
+      ],
       ...request
     };
 
