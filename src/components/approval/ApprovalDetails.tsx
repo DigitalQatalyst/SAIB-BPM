@@ -230,7 +230,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             </button>
           </>}
           <a
-            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf"
+            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=GQ6rea"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"

@@ -479,11 +479,11 @@ const DocWriterSimple = () => {
 
                       <button
                         type="button"
-                        onClick={() => navigate(`/process-model-creator/${requestId}`)}
+                        onClick={() => window.open('https://arqitek-ae.avolutionsoftware.com/Browser/?p=Content%2FDiagrams%2F8476543.html', '_blank')}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         <Network className="-ml-0.5 mr-2 h-4 w-4" />
-                        {processModelId ? 'Edit Process Model' : 'Create Process Model'}
+                        {processModelId ? 'Edit Process Model' : 'Amend Process Model'}
                       </button>
                       <button
                         type="button"
