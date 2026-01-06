@@ -39,9 +39,9 @@ const STORAGE_KEY = 'serviceRequests';
 // Storage key for documents
 const DOCUMENTS_STORAGE_KEY = 'generatedDocuments';
 
-// Force clear storage for development - this will clear old data and load correct PDF URL
+// Force clear storage for development - this will clear old data and load correct attribution
 localStorage.clear(); // Clear everything
-console.log('All localStorage cleared - correct PDF URL will be loaded');
+console.log('All localStorage cleared - correct attribution (Salem Doe) will be loaded');
 
 // Function to update existing requests with proper URLs
 const updateExistingRequestsWithUrls = () => {
@@ -213,16 +213,16 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
           name: '2507_SAIB BP&P Procedure_V2.7',
           type: 'DOCX',
           size: '2.1 MB',
-          uploadedBy: 'System',
+          uploadedBy: 'Salem Doe',
           date: '2023-09-15',
           url: '',
           icon: '/microsoft-word-icon.webp'
         },
         {
-          name: 'SAMA_EN_10831_VER1.pdf',
+          name: 'SAMA_EN_10831_VER1',
           type: 'PDF',
           size: '1.8 MB',
-          uploadedBy: 'System',
+          uploadedBy: 'Salem Doe',
           date: '2023-09-15',
           url: '',
           icon: '/PDF_file_icon.svg.png'
@@ -269,16 +269,16 @@ These procedures apply to all interbank transfers processed by the Treasury Depa
           name: '2507_SAIB BP&P Procedure_V2.7',
           type: 'DOCX',
           size: '2.1 MB',
-          uploadedBy: 'System',
+          uploadedBy: 'Salem Doe',
           date: '2023-09-15',
           url: '',
           icon: '/microsoft-word-icon.webp'
         },
         {
-          name: 'SAMA_EN_10831_VER1.pdf',
+          name: 'SAMA_EN_10831_VER1',
           type: 'PDF',
           size: '1.8 MB',
-          uploadedBy: 'System',
+          uploadedBy: 'Salem Doe',
           date: '2023-09-15',
           url: '',
           icon: '/PDF_file_icon.svg.png'
@@ -470,7 +470,7 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
           name: '2507_SAIB BP&P Procedure_V2.7',
           type: 'DOCX',
           size: '2.1 MB',
-          uploadedBy: 'System',
+          uploadedBy: 'Salem Doe',
           date: dateCreated,
           url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz',
           icon: '/microsoft-word-icon.webp'
@@ -479,7 +479,7 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
           name: 'SAMA_EN_10831_VER1',
           type: 'PDF',
           size: '1.8 MB',
-          uploadedBy: 'System',
+          uploadedBy: 'Salem Doe',
           date: dateCreated,
           url: 'https://arqitek.sharepoint.com/:b:/s/DELSAIBBPM4.0/IQDj2HBSKMCcRKYd85fAaSA4AVMHoNQzt-ZIkziCvmTR8Jo?e=ijFWr5',
           icon: '/PDF_file_icon.svg.png'
