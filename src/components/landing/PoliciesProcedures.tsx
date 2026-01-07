@@ -84,9 +84,14 @@ const PoliciesProcedures = () => {
                 <div className="text-sm text-gray-500 mr-6">
                   {t('lastUpdated')}: {doc.lastUpdated}
                 </div>
-                <Link to={`/document/${doc.id}`} className="bg-[#FECC0E]/20 hover:bg-[#FECC0E]/30 text-[#9E800D] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200">
+                <a
+                  href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQBcOyDhQr5lQoXIDfaQWDVCAfrX0bPBBnSVexqdmRNj8GE?e=nvJ2FY"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#FECC0E]/20 hover:bg-[#FECC0E]/30 text-[#9E800D] px-4 py-2 rounded-md text-sm font-medium transition-all duration-200"
+                >
                   {t('view') || 'View'}
-                </Link>
+                </a>
               </div>
             </div>
           ))}
