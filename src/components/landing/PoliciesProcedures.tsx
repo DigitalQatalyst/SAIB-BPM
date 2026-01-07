@@ -1,21 +1,55 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowRight, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
 import { documentsData } from '../../services/mockDocumentsData';
+import { getRecentPublishedDocuments } from '../../services/requestTracking';
+
 const PoliciesProcedures = () => {
-  const {
-    t
-  } = useLanguage();
-  // Convert documentsData object to array
-  const docsArray = Object.values(documentsData);
-  // Filter to get one policy, one procedure, and one form
-  const featuredPolicy = docsArray.find(doc => doc.type === 'Policy');
-  const featuredProcedure = docsArray.find(doc => doc.type === 'Procedure');
-  const featuredForm = docsArray.find(doc => doc.type === 'Form');
-  // Combine into a featured documents array, filtering out undefined values
-  const featuredDocs = [featuredPolicy, featuredProcedure, featuredForm].filter(Boolean);
-  return <div className="py-16 bg-[#FECC0E]/5">
+  const { t } = useLanguage();
+  const [featuredDocs, setFeaturedDocs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadFeaturedDocuments = () => {
+      // Try to get recently published documents
+      const publishedDocs = getRecentPublishedDocuments(3);
+
+      if (publishedDocs && publishedDocs.length > 0) {
+        // Map published documents to the format expected by the component
+        const mappedDocs = publishedDocs.map(doc => ({
+          id: doc.id,
+          title: doc.title,
+          type: doc.type,
+          status: doc.status,
+          lastUpdated: doc.lastUpdated,
+        }));
+        setFeaturedDocs(mappedDocs);
+      } else {
+        // Fallback to mock data if no published documents
+        const docsArray = Object.values(documentsData);
+        const featuredPolicy = docsArray.find(doc => doc.type === 'Policy');
+        const featuredProcedure = docsArray.find(doc => doc.type === 'Procedure');
+        const featuredForm = docsArray.find(doc => doc.type === 'Form');
+        const mockDocs = [featuredPolicy, featuredProcedure, featuredForm].filter(Boolean);
+        setFeaturedDocs(mockDocs);
+      }
+    };
+
+    // Initial load
+    loadFeaturedDocuments();
+
+    // Listen for published documents updates
+    window.addEventListener('publishedDocumentsUpdated', loadFeaturedDocuments);
+    window.addEventListener('storage', loadFeaturedDocuments);
+
+    return () => {
+      window.removeEventListener('publishedDocumentsUpdated', loadFeaturedDocuments);
+      window.removeEventListener('storage', loadFeaturedDocuments);
+    };
+  }, []);
+
+  return (
+    <div className="py-16 bg-[#FECC0E]/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -29,7 +63,8 @@ const PoliciesProcedures = () => {
           </Link>
         </div>
         <div className="mt-8 space-y-4">
-          {featuredDocs.map(doc => <div key={doc.id} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+          {featuredDocs.map(doc => (
+            <div key={doc.id} className="bg-white rounded-lg border border-gray-100 shadow-sm p-4 flex items-center justify-between">
               <div className="flex items-center">
                 <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center mr-4">
                   <FileText className="h-6 w-6 text-gray-400" />
@@ -53,9 +88,12 @@ const PoliciesProcedures = () => {
                   {t('view') || 'View'}
                 </Link>
               </div>
-            </div>)}
+            </div>
+          ))}
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default PoliciesProcedures;

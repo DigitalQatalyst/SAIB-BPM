@@ -296,6 +296,11 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date
                     </th>
+                    {existingDocument && (
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Document
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -314,9 +319,22 @@ const RequestDetails: React.FC<RequestDetailsProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {approver.date}
                     </td>
+                    {existingDocument && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {index === 0 && (
+                          <button
+                            onClick={handleGenerateDocument}
+                            className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            View Document
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>)}
                   {!(request as any).approvers && <tr>
-                    <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                    <td colSpan={existingDocument ? 5 : 4} className="px-6 py-4 text-center text-sm text-gray-500">
                       No approval workflow configured
                     </td>
                   </tr>}

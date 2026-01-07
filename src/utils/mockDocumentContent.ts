@@ -1,54 +1,42 @@
 // Mock document content for POC demonstration
 // This simulates AI-generated content without calling Azure OpenAI
 
-export const MOCK_DOCUMENT_CONTENT = `**Current Rule:**
+export const MOCK_DOCUMENT_CONTENT = `**Current Workflow for BPM Forums:**
 
-**2.3 Forms Rules**
+**1.4 Establish BPM Forums**
 
-**Rule 1:** As per SAMA Circular No. 391000020013, dated 20/02/1439H (09/11/2017), SAIB should obtain customer signatures on all pages of a contract or agreement if it consists of multiple pages or contains fields for the customer's signature, to ensure the client has read and understood all the terms and conditions mentioned thereon and also to be in compliance with consumer protection principles.
+- Define forum structure, frequency, quorum, and decision authority.
+- Assign forum roles (Chair, Members, Secretariat).
+- Develop and approve forum terms of reference (ToR).
+- Schedule forum meetings and establish a biweekly meeting in the calendar.
+- Communicate forum setup and participation requirements.
+- Activate forums and commence governance operations.
 
-**Rule 2:** The above circular was followed by another circular from SAMA with reference number 391000080993, dated 19/07/1439H, stating that the above circular applies only to individual customers and not to corporate customers. The banks have the right not to obtain a corporate customer's signature on every page of the contract or agreement if it consists of multiple pages.
+**Updated Workflow for BPM Forums:**
 
-**Rule 3:** Another circular has been received from SAMA with reference number 29811/67, dated 11/05/1440H, instructing banks to exclude the requirement of obtaining a customer's signature on every page of the account opening agreement applicable to individual customers.
+**1.4 Establish BPM Forums (Updated)**
 
-**Rule 4:** Circular reference number 29811/67, dated 11/05/1440H, has listed the following controls related to individual customer account opening agreements: (Text from the circular would follow here.)
+- Define forum structure, frequency, quorum, and decision authority, including compliance and regulatory reporting requirements.
+- Assign forum roles (Chair, Members, Secretariat, Compliance Officers).
+- Develop and approve forum terms of reference (ToR), ensuring alignment with updated regulations and compliance standards.
 
-**Rule 5:** As per SAMA's Circular 42043529 dated 26/06/1442, which refers to SAMA Circular 41028325 dated 22/04/1441 and SAMA's circular 391000031596 dated 18/03/1439H, and 381000053456 dated 17/05/1438H, it's not allowed to include Companies Official stamp field within the Bank's forms and agreements that are related to entities.
+**Current Workflow for Maintaining the Registry:**
 
-**Rule 6:** As per SAMA's circular Financial Consumer Protection Principles and Rules 1444H/2022, SAIB should adhere to the following for individual customer-related external forms: (Text from the circular would follow here.)
+**1.6 Maintain Registry**
 
-**Updated Rule:**
+- Establish a centralized BPM registry for roles, forums, and assignments.
+- Record all approved roles, stakeholders, and forum details.
+- Track changes, versions, and effective dates.
+- Perform periodic validation to ensure accuracy and completeness.
+- Ensure controlled access and audit readiness of the registry.
 
-**2.3 Forms Rules**
+**Updated Workflow for Maintaining the Registry:**
 
-**Rule 1:** As per SAMA Circular No. 391000020013, dated 09/11/2017, SAIB must obtain customer signatures on all pages of a contract or agreement if it consists of multiple pages or contains fields for customer signatures to ensure the client has read and understood all the terms and conditions.
+**1.6 Maintain Registry (Updated)**
 
-**Rule 2:** As per SAMA Circular No. 391000080993, dated 19/07/1439, the signature requirement applies only to individual customers. Corporate customers are not required to provide a signature on every page of contracts or agreements that consist of multiple pages.
-
-**Rule 3:** As per SAMA Circular No. 29811/67, dated 11/05/1440, banks are no longer required to obtain a customer's signature on every page of the account opening agreement for individual customers.
-
-**Rule 4:** SAMA Circular 42043529, dated 26/06/1442, prohibits the inclusion of a company's official stamp in forms related to agreements or contracts involving entities.
-
-**Rule 5:** SAIB is required to comply with SAMA's Financial Consumer Protection Principles & Rules (1444H/2022), ensuring all external forms for individual customers adhere to consumer protection guidelines.
-
-**Implementation Guideline:**
-
-**For Customer Signatures:**
-Ensure signature fields are required only for pages containing essential terms and conditions.
-Modify digital forms to include signature fields only where needed (e.g., for acknowledging key terms).
-
-**For Corporate Customers:**
-Remove the signature requirement on every page for corporate customers in multi-page contracts.
-Update internal forms to ensure that corporate customers are only asked to sign specific, critical sections of agreements.
-
-**For Account Opening Agreements:**
-Exclude the signature requirement for individual customers on every page of account opening agreements in compliance with SAMA Circular No. 29811/67.
-
-**For Company Stamps:**
-Remove any company official stamp fields from forms related to corporate agreements as per SAMA Circular 42043529.
-
-**For Consumer Protection:**
-Ensure that all external forms for individual customers are compliant with SAMA's Financial Consumer Protection Principles & Rules (1444H/2022), and update the forms as necessary.`;
+- Establish a centralized BPM registry for roles, forums, and assignments, including tracking for compliance status.
+- Record all approved roles, stakeholders, and forum details with a version history that includes compliance updates.
+- Perform periodic validation to ensure accuracy and completeness, including quarterly compliance audits.`;
 
 // Get mock content for full document
 export const getMockFullDocument = (): string => {
