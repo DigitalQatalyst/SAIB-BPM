@@ -22,7 +22,7 @@ const DocumentPreview: React.FC<DocumentPreviewProps> = ({ content, title }) => 
     html = html.replace(/\*(.*?)\*/gim, '<em class="italic">$1</em>');
 
     // Convert lists
-    html = html.replace(/^\- (.*$)/gim, '<li class="ml-6 mb-2">• $1</li>');
+    html = html.replace(/^\- (.*$)/gim, '<li class="ml-6 mb-2 list-disc">$1</li>');
     html = html.replace(/^\d+\. (.*$)/gim, '<li class="ml-6 mb-2 list-decimal">$1</li>');
 
     // Convert tables (basic support)
