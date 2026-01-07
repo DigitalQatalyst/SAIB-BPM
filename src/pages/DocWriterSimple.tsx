@@ -121,9 +121,19 @@ const DocWriterSimple = () => {
     window.addEventListener('requestsUpdated', updateRequestStatus);
     window.addEventListener('storage', updateRequestStatus);
 
+    // Also refresh when tab becomes visible (helps with account switching)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('DocWriter: Tab became visible, checking for updates');
+        updateRequestStatus();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       window.removeEventListener('requestsUpdated', updateRequestStatus);
       window.removeEventListener('storage', updateRequestStatus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [requestId]);
 
