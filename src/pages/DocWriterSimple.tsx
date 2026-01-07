@@ -63,10 +63,9 @@ const DocWriterSimple = () => {
     if (requestId) {
       const requestData = {
         id: parseInt(requestId),
-        title: 'Updated Rule for Section 2.3 (Forms Rules)',
+        title: 'BUSINESS PROCESSES & PROCEDURES MANUAL',
         category: 'Forms & Compliance',
-        justification:
-          'The Saudi Central Bank (SAMA) has issued new circulars regarding customer signatures and forms requirements.',
+        justification: '',
         sourceOfRequest: 'Regulatory Requirement',
         department: 'Compliance',
       };
