@@ -34,6 +34,8 @@ export interface RequestItem {
     url?: string; // Optional URL for download link
     icon?: string; // Optional icon path
   }>;
+
+  selectedProcedureName?: string; // Name of the procedure selected from Service Request Form
 }
 // Notification tracking interface
 export interface RequestNotification {
@@ -61,10 +63,31 @@ const DOCUMENTS_STORAGE_KEY = 'generatedDocuments';
 const NOTIFICATIONS_STORAGE_KEY = 'requestNotifications';
 // Storage key for P&P team notifications
 const PP_TEAM_NOTIFICATIONS_KEY = 'ppTeamNotifications';
+// Storage key for published documents
+const PUBLISHED_DOCS_STORAGE_KEY = 'publishedDocuments';
 
-// Force clear storage for development - this will clear old data and load correct attribution
-localStorage.clear(); // Clear everything
-console.log('All localStorage cleared - correct attribution (Salem Doe) will be loaded');
+// Published document interface for landing page
+export interface PublishedDocument {
+  id: string;
+  documentId: string;
+  requestId: number;
+  title: string;
+  description: string;
+  type: 'Policy' | 'Procedure' | 'Form';
+  publishedDate: string;
+  publishedBy: string;
+  version: string;
+  lastUpdated: string;
+  status: string;
+  category?: string;
+  department?: string;
+}
+
+
+// COMMENTED OUT: This was clearing all data on every page refresh
+// localStorage.clear(); // Clear everything
+// console.log('All localStorage cleared - correct attribution (Salem Doe) will be loaded');
+
 
 // Function to update existing requests with proper URLs
 const updateExistingRequestsWithUrls = () => {
@@ -1097,5 +1120,109 @@ export const markAllPPNotificationsAsRead = (userName: string): void => {
     }
   } catch (error) {
     console.error('Error marking all P&P notifications as read:', error);
+  }
+};
+
+// ========== Published Documents Functions ==========
+
+// Get all published documents from localStorage
+export const getPublishedDocuments = (): PublishedDocument[] => {
+  try {
+    const documents = localStorage.getItem(PUBLISHED_DOCS_STORAGE_KEY);
+    return documents ? JSON.parse(documents) : [];
+  } catch (error) {
+    console.error('Error retrieving published documents from localStorage:', error);
+    return [];
+  }
+};
+
+// Save published documents to localStorage
+const savePublishedDocuments = (documents: PublishedDocument[]): void => {
+  try {
+    localStorage.setItem(PUBLISHED_DOCS_STORAGE_KEY, JSON.stringify(documents));
+    // Dispatch custom event to notify UI of published documents changes
+    window.dispatchEvent(new CustomEvent('publishedDocumentsUpdated'));
+    console.log('Published documents saved and event dispatched');
+  } catch (error) {
+    console.error('Error saving published documents to localStorage:', error);
+  }
+};
+
+// Publish a document and add it to published documents list
+export const publishDocumentToLandingPage = (
+  requestId: number,
+  documentId: string,
+  documentContent: string,
+  documentTitle: string,
+  publishedBy: string = 'Khalid Al-Otaibi'
+): void => {
+  try {
+    const request = getRequestById(requestId);
+    if (!request) {
+      console.error(`publishDocumentToLandingPage: Request ${requestId} not found`);
+      return;
+    }
+
+    const publishedDocuments = getPublishedDocuments();
+
+    // Determine document type based on request type or category
+    let docType: 'Policy' | 'Procedure' | 'Form' = 'Policy';
+    if (request.requestType.toLowerCase().includes('procedure')) {
+      docType = 'Procedure';
+    } else if (request.requestType.toLowerCase().includes('form')) {
+      docType = 'Form';
+    }
+
+    // Use the selected procedure name from the request, or fall back to documentTitle
+    const publishedTitle = request.selectedProcedureName || documentTitle || request.requestDetail;
+
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+
+    // Create published document entry
+    const publishedDoc: PublishedDocument = {
+      id: `pub-${Date.now()}`,
+      documentId,
+      requestId,
+      title: publishedTitle,
+      description: request.fullDescription || `This document was created in response to ${request.requestDetail}`,
+      type: docType,
+      publishedDate: today,
+      publishedBy,
+      version: '1.0',
+      lastUpdated: today, // Use today's date instead of publishedDate
+      status: 'Active',
+      category: request.serviceCategory,
+      department: request.department,
+    };
+
+    // Add to published documents list
+    publishedDocuments.push(publishedDoc);
+    savePublishedDocuments(publishedDocuments);
+
+    // Mark request as completed
+    completeRequest(requestId);
+
+    console.log(`publishDocumentToLandingPage: Published document ${documentId} for request ${requestId}`);
+  } catch (error) {
+    console.error('Error publishing document to landing page:', error);
+  }
+};
+
+// Get N most recently published documents
+export const getRecentPublishedDocuments = (count: number = 3): PublishedDocument[] => {
+  try {
+    const publishedDocuments = getPublishedDocuments();
+
+    // Sort by published date (most recent first)
+    const sorted = publishedDocuments.sort((a, b) => {
+      return new Date(b.publishedDate).getTime() - new Date(a.publishedDate).getTime();
+    });
+
+    // Return top N documents
+    return sorted.slice(0, count);
+  } catch (error) {
+    console.error('Error getting recent published documents:', error);
+    return [];
   }
 };

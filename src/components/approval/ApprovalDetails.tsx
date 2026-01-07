@@ -3,7 +3,7 @@ import { ArrowLeft, CheckCircle, FileText, XCircle, ExternalLink, Download } fro
 import { generateFormattedWordDocument } from '../../utils/wordGenerator';
 import { getProcessModelImage } from '../../utils/processModelUtils';
 import { useDocument } from '../../context/DocumentContext';
-import { getRequestById, createPPTeamNotification } from '../../services/requestTracking';
+import { getRequestById, createPPTeamNotification, updateRequest } from '../../services/requestTracking';
 interface ApprovalDetailsProps {
   requestId: number;
   onBackToList: () => void;
@@ -163,12 +163,17 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
       });
     }
 
+    // Update request status to "Approved" so P&P team can see the change
+    updateRequest(request.id, {
+      status: 'Approved',
+      approvalStatus: 'Approved',
+      latestNote: `Approved by ${currentUser}`
+    });
+
     // Create notification for P&P team member to publish the document
     createPPTeamNotification(request.id, 'approval');
 
-    // Update request status (simplified, no setStatus call needed)
     setShowApproveConfirm(false);
-    // In a real app, this would make an API call to update the request status
   };
   const handleReject = () => {
     // Update the status of the current user (Ahmed Al-Rashid) to Rejected

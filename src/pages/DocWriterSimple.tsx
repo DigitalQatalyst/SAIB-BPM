@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Send, FileText, AlertCircle, Upload, FileUp, Download, CheckCircle, Network, RotateCw, Eye, Edit } from 'lucide-react';
+import { ArrowLeft, Save, Send, FileText, AlertCircle, Upload, FileUp, Download, CheckCircle, Network, RotateCw, Eye, Edit, Rocket } from 'lucide-react';
 import { useDocument } from '../context/DocumentContext';
 import { useLanguage } from '../context/LanguageContext';
 import { generateFormattedWordDocument } from '../utils/wordGenerator';
 import { getLinkedProcessModel } from '../utils/processModelUtils';
 import DocumentPreview from '../components/docwriter/DocumentPreview';
 import { getMockFullDocument } from '../utils/mockDocumentContent';
+import { getRequestById } from '../services/requestTracking';
 
 type FormStep = 'info' | 'additionalDocs';
 type DocumentLanguage = 'english' | 'arabic' | 'bilingual';
@@ -21,6 +22,7 @@ const DocWriterSimple = () => {
     getDocumentByRequestId,
     setCurrentDocument,
     advanceToNextApprovalStage,
+    publishDocument,
   } = useDocument();
 
   const [formStep, setFormStep] = useState<FormStep>('info');
@@ -48,6 +50,8 @@ const DocWriterSimple = () => {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [requestStatus, setRequestStatus] = useState<string>('In Progress');
+  const [isPublishing, setIsPublishing] = useState(false);
 
   // Process model state
   const [processModelId, setProcessModelId] = useState<string | null>(null);
@@ -96,6 +100,31 @@ const DocWriterSimple = () => {
         setProcessModelTitle(linkedModel.title);
       }
     }
+  }, [requestId]);
+
+  // Listen for request status updates
+  useEffect(() => {
+    if (!requestId) return;
+
+    const updateRequestStatus = () => {
+      const request = getRequestById(parseInt(requestId));
+      if (request) {
+        setRequestStatus(request.status);
+        console.log('DocWriter: Request status updated to', request.status);
+      }
+    };
+
+    // Initial status check
+    updateRequestStatus();
+
+    // Listen for storage events (triggered when approver approves)
+    window.addEventListener('requestsUpdated', updateRequestStatus);
+    window.addEventListener('storage', updateRequestStatus);
+
+    return () => {
+      window.removeEventListener('requestsUpdated', updateRequestStatus);
+      window.removeEventListener('storage', updateRequestStatus);
+    };
   }, [requestId]);
 
   const handleInputChange = (
@@ -211,6 +240,28 @@ const DocWriterSimple = () => {
         setTimeout(() => setDownloadError(null), 3000);
       } finally {
         setIsDownloading(false);
+      }
+    }
+  };
+
+  const handlePublishDocument = async () => {
+    if (document) {
+      try {
+        setIsPublishing(true);
+
+        // Use the publishDocument function from useDocument hook
+        publishDocument(document.id);
+
+        // Show success message
+        alert('Document published successfully!');
+
+        // Navigate back to requests
+        navigate('/manage-requests');
+      } catch (error) {
+        console.error('Error publishing document:', error);
+        alert('Failed to publish document. Please try again.');
+      } finally {
+        setIsPublishing(false);
       }
     }
   };
@@ -491,14 +542,27 @@ const DocWriterSimple = () => {
                         <Save className="-ml-0.5 mr-2 h-4 w-4" />
                         Save Draft
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleSendToApprover}
-                        className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                      >
-                        <Send className="-ml-0.5 mr-2 h-4 w-4" />
-                        Send to Approver
-                      </button>
+
+                      {requestStatus === 'Approved' ? (
+                        <button
+                          type="button"
+                          onClick={handlePublishDocument}
+                          disabled={isPublishing}
+                          className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:opacity-50"
+                        >
+                          <Rocket className="-ml-0.5 mr-2 h-4 w-4" />
+                          {isPublishing ? 'Publishing...' : 'Publish Document'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendToApprover}
+                          className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
+                        >
+                          <Send className="-ml-0.5 mr-2 h-4 w-4" />
+                          Send to Approver
+                        </button>
+                      )}
                     </div>
                   </div>
 
