@@ -5,8 +5,6 @@ import { useDocument } from '../context/DocumentContext';
 import { useLanguage } from '../context/LanguageContext';
 import { generateFormattedWordDocument } from '../utils/wordGenerator';
 import { getLinkedProcessModel } from '../utils/processModelUtils';
-import CommentSection from '../components/docwriter/CommentSection';
-import VersionHistory from '../components/docwriter/VersionHistory';
 import DocumentPreview from '../components/docwriter/DocumentPreview';
 import { getMockFullDocument } from '../utils/mockDocumentContent';
 
@@ -435,9 +433,9 @@ const DocWriterSimple = () => {
           </div>
         ) : (
           document && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {/* Document Editor - Main Content */}
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-1">
                 <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
                   <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
                     <div>
@@ -479,11 +477,11 @@ const DocWriterSimple = () => {
 
                       <button
                         type="button"
-                        onClick={() => navigate(`/process-model-creator/${requestId}`)}
+                        onClick={() => window.open('https://arqitek-ae.avolutionsoftware.com/Browser/?p=Content%2FDiagrams%2F8476543.html', '_blank')}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         <Network className="-ml-0.5 mr-2 h-4 w-4" />
-                        Amend Process Model
+                        {processModelId ? 'Edit Process Model' : 'Amend Process Model'}
                       </button>
                       <button
                         type="button"
@@ -557,24 +555,6 @@ const DocWriterSimple = () => {
                     )}
                   </div>
                 </div>
-              </div>
-
-              {/* Right Sidebar - Comments and Version History */}
-              <div className="lg:col-span-1 space-y-8">
-                {document.id && <CommentSection documentId={document.id} documentContent={document.content} />}
-                {document.id && (
-                  <VersionHistory
-                    documentId={document.id}
-                    currentContent={document.content}
-                    documentTitle={formState.title}
-                    language={formState.documentLanguage}
-                    onRestoreVersion={(content) => {
-                      if (document) {
-                        setDocument({ ...document, content });
-                      }
-                    }}
-                  />
-                )}
               </div>
             </div>
           )
