@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { MenuIcon, X, Globe, ChevronDown, Settings, LogOut, Users, User, FileText, BookOpen, ClipboardList, Check, BarChart2, LineChart, AlertTriangle, CheckCircle, Shield, Bell } from 'lucide-react';
+import { MenuIcon, X, Globe, ChevronDown, Settings, LogOut, Users, User, FileText, BookOpen, ClipboardList, Check, BarChart2, LineChart, AlertTriangle, CheckCircle, Shield, Bell, XCircle } from 'lucide-react';
 import { useUser } from '../../context/UserContext';
 import { useLanguage } from '../../context/LanguageContext';
-import { getUnreadRequestCount, getUnreadRequests, markRequestAsRead, getUnreadApprovalCount, getUnreadApprovals } from '../../services/requestTracking';
+import { getUnreadRequestCount, getUnreadRequests, markRequestAsRead, getUnreadApprovalCount, getUnreadApprovals, getUnreadPPNotifications, getUnreadPPNotificationCount, markPPNotificationAsRead } from '../../services/requestTracking';
 const NavbarSecondary = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -81,8 +81,9 @@ const NavbarSecondary = () => {
   useEffect(() => {
     const updateNotificationCount = () => {
       if (role === 'pp_team') {
-        const count = getUnreadRequestCount(name);
-        setNotificationCount(count);
+        const requestCount = getUnreadRequestCount(name);
+        const ppNotifCount = getUnreadPPNotificationCount(name);
+        setNotificationCount(requestCount + ppNotifCount);
       } else if (role === 'approver') {
         const count = getUnreadApprovalCount(name);
         setNotificationCount(count);
@@ -100,11 +101,13 @@ const NavbarSecondary = () => {
     };
 
     window.addEventListener('requestNotificationsUpdated', handleNotificationUpdate);
+    window.addEventListener('ppTeamNotificationsUpdated', handleNotificationUpdate);
     window.addEventListener('requestsUpdated', handleNotificationUpdate);
     window.addEventListener('storage', handleNotificationUpdate);
 
     return () => {
       window.removeEventListener('requestNotificationsUpdated', handleNotificationUpdate);
+      window.removeEventListener('ppTeamNotificationsUpdated', handleNotificationUpdate);
       window.removeEventListener('requestsUpdated', handleNotificationUpdate);
       window.removeEventListener('storage', handleNotificationUpdate);
     };
@@ -289,8 +292,46 @@ const NavbarSecondary = () => {
                     </div>
                     <div className="py-2 overflow-y-auto" style={{ maxHeight: '360px' }}>
                       {role === 'pp_team' ? (
-                        getUnreadRequests(name).length > 0 ? (
-                          getUnreadRequests(name).map((request) => (
+                        <>
+                          {/* P&P Team Approval Decision Notifications */}
+                          {getUnreadPPNotifications(name).map((notif) => (
+                            <button
+                              key={notif.id}
+                              onClick={() => {
+                                markPPNotificationAsRead(notif.id, name);
+                                setIsNotificationOpen(false);
+                                navigate('/manage-requests');
+                              }}
+                              className="w-full flex items-start p-4 hover:bg-gray-50 text-left transition-colors border-l-4 border-transparent hover:border-[#9E800D]"
+                            >
+                              <div className={`flex-shrink-0 h-10 w-10 rounded-md flex items-center justify-center ${notif.type === 'approval'
+                                ? 'bg-green-100'
+                                : 'bg-red-100'
+                                }`}>
+                                {notif.type === 'approval' ? (
+                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                ) : (
+                                  <XCircle className="h-5 w-5 text-red-600" />
+                                )}
+                              </div>
+                              <div className="ml-4 flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {notif.ticketNumber} {notif.type === 'approval' ? 'Approved' : 'Rejected'}
+                                </p>
+                                <p className="text-xs text-gray-500 mt-1 truncate">
+                                  {notif.type === 'approval'
+                                    ? 'Ready to publish to Procedure Marketplace'
+                                    : 'Needs revision'}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {new Date(notif.createdAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+
+                          {/* Regular Request Notifications -*/}
+                          {getUnreadRequests(name).map((request) => (
                             <button
                               key={request.id}
                               onClick={() => {
@@ -315,12 +356,15 @@ const NavbarSecondary = () => {
                                 </p>
                               </div>
                             </button>
-                          ))
-                        ) : (
-                          <div className="p-4 text-center text-gray-500">
-                            <p className="text-sm">No unread requests</p>
-                          </div>
-                        )
+                          ))}
+
+                          {/* No notifications message */}
+                          {getUnreadPPNotifications(name).length === 0 && getUnreadRequests(name).length === 0 && (
+                            <div className="p-4 text-center text-gray-500">
+                              <p className="text-sm">No unread notifications</p>
+                            </div>
+                          )}
+                        </>
                       ) : (
                         getUnreadApprovals(name).length > 0 ? (
                           getUnreadApprovals(name).map((request) => (

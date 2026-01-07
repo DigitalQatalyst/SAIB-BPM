@@ -134,10 +134,10 @@ const DocWriterSimple = () => {
 
     try {
       console.log('[POC] Generating document instantly...');
-      
+
       // Show generating state for just 1 second for visual feedback
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // Get hardcoded SAMA content
       const generatedContent = getMockFullDocument();
 
@@ -155,7 +155,7 @@ const DocWriterSimple = () => {
 
       setShowForm(false);
       setFormStep('info');
-      
+
       console.log('[POC] Document generated successfully');
     } catch (error) {
       console.error('Error generating document:', error);
@@ -235,8 +235,8 @@ const DocWriterSimple = () => {
             {editMode
               ? 'Edit document based on service request feedback'
               : requestId
-              ? 'Generate document based on service request information'
-              : 'Create document using the selected template'}
+                ? 'Generate document based on service request information'
+                : 'Create document using the selected template'}
           </p>
         </div>
 
@@ -445,8 +445,8 @@ const DocWriterSimple = () => {
                         Document {viewMode === 'preview' ? 'Preview' : 'Editor'}
                       </h2>
                       <p className="mt-1 text-sm text-gray-500">
-                        {viewMode === 'preview' 
-                          ? 'Review the formatted document' 
+                        {viewMode === 'preview'
+                          ? 'Review the formatted document'
                           : 'Edit the document content'}
                       </p>
                     </div>
@@ -456,11 +456,10 @@ const DocWriterSimple = () => {
                         <button
                           type="button"
                           onClick={() => setViewMode('preview')}
-                          className={`inline-flex items-center px-3 py-2 border shadow-sm text-sm font-medium rounded-md ${
-                            viewMode === 'preview'
-                              ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
-                              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-                          }`}
+                          className={`inline-flex items-center px-3 py-2 border shadow-sm text-sm font-medium rounded-md ${viewMode === 'preview'
+                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                            }`}
                         >
                           <Eye className="-ml-0.5 mr-2 h-4 w-4" />
                           Preview
@@ -468,11 +467,10 @@ const DocWriterSimple = () => {
                         <button
                           type="button"
                           onClick={() => setViewMode('edit')}
-                          className={`inline-flex items-center px-3 py-2 border shadow-sm text-sm font-medium rounded-md ${
-                            viewMode === 'edit'
-                              ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
-                              : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
-                          }`}
+                          className={`inline-flex items-center px-3 py-2 border shadow-sm text-sm font-medium rounded-md ${viewMode === 'edit'
+                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50'
+                            : 'border-gray-300 text-gray-700 bg-white hover:bg-gray-50'
+                            }`}
                         >
                           <Edit className="-ml-0.5 mr-2 h-4 w-4" />
                           Edit
@@ -485,7 +483,7 @@ const DocWriterSimple = () => {
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                       >
                         <Network className="-ml-0.5 mr-2 h-4 w-4" />
-                        {processModelId ? 'Edit Process Model' : 'Create Process Model'}
+                        Amend Process Model
                       </button>
                       <button
                         type="button"
@@ -494,24 +492,6 @@ const DocWriterSimple = () => {
                       >
                         <Save className="-ml-0.5 mr-2 h-4 w-4" />
                         Save Draft
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleDownloadWord}
-                        disabled={isDownloading}
-                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                      >
-                        {isDownloading ? (
-                          <>
-                            <RotateCw className="animate-spin -ml-0.5 mr-2 h-4 w-4" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Download className="-ml-0.5 mr-2 h-4 w-4" />
-                            Download as Word
-                          </>
-                        )}
                       </button>
                       <button
                         type="button"
@@ -547,8 +527,8 @@ const DocWriterSimple = () => {
                   <div className="px-4 py-5 sm:px-6">
                     {viewMode === 'preview' ? (
                       /* Preview Mode - Formatted Document */
-                      <DocumentPreview 
-                        content={document.content} 
+                      <DocumentPreview
+                        content={document.content}
                         title={formState.title}
                       />
                     ) : (
@@ -600,7 +580,7 @@ const DocWriterSimple = () => {
           )
         )}
       </div>
-    </div>
+    </div >
   );
 };
 

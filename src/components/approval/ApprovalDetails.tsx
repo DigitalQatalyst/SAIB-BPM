@@ -3,7 +3,7 @@ import { ArrowLeft, CheckCircle, FileText, XCircle, ExternalLink, Download } fro
 import { generateFormattedWordDocument } from '../../utils/wordGenerator';
 import { getProcessModelImage } from '../../utils/processModelUtils';
 import { useDocument } from '../../context/DocumentContext';
-import { getRequestById } from '../../services/requestTracking';
+import { getRequestById, createPPTeamNotification } from '../../services/requestTracking';
 interface ApprovalDetailsProps {
   requestId: number;
   onBackToList: () => void;
@@ -162,6 +162,10 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         icon: CheckCircle
       });
     }
+
+    // Create notification for P&P team member to publish the document
+    createPPTeamNotification(request.id, 'approval');
+
     // Update request status (simplified, no setStatus call needed)
     setShowApproveConfirm(false);
     // In a real app, this would make an API call to update the request status
@@ -191,6 +195,10 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         icon: XCircle
       });
     }
+
+    // Create notification for P&P team member to review the document
+    createPPTeamNotification(request.id, 'rejection');
+
     // Update request status (simplified, no setStatus call needed)
     setShowRejectConfirm(false);
     // In a real app, this would make an API call to update the request status
@@ -230,7 +238,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             </button>
           </>}
           <a
-            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf"
+            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -238,13 +246,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             <FileText size={14} className="mr-1" />
             View Document
           </a>
-          <button
-            onClick={handleDownloadDocument}
-            className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <Download size={14} className="mr-1" />
-            Download as Word
-          </button>
+
         </div>
       </div>
       <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
@@ -330,7 +332,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
               </span>
             </div>
             <a
-              href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/EQRkD8B_QwpIqiQ0e3hvclwBW9g_Pe_Ho4niPxIkpUEE9A?e=mRIcqf"
+              href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150"

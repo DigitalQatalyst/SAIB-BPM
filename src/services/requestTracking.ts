@@ -41,18 +41,26 @@ export interface RequestNotification {
   viewedBy: string[]; // Array of usernames who have viewed this request
   createdAt: string;
 }
-// Notification tracking interface
-export interface RequestNotification {
+
+// P&P Team notification interface for approval decisions
+export interface PPTeamNotification {
+  id: string;
   requestId: number;
-  viewedBy: string[]; // Array of usernames who have viewed this request
+  ticketNumber: string;
+  requestDetail: string;
+  type: 'approval' | 'rejection';
   createdAt: string;
+  readBy: string[]; // P&P team members who have read this notification
 }
+
 // Storage key
 const STORAGE_KEY = 'serviceRequests';
 // Storage key for documents
 const DOCUMENTS_STORAGE_KEY = 'generatedDocuments';
 // Storage key for notifications
 const NOTIFICATIONS_STORAGE_KEY = 'requestNotifications';
+// Storage key for P&P team notifications
+const PP_TEAM_NOTIFICATIONS_KEY = 'ppTeamNotifications';
 
 // Force clear storage for development - this will clear old data and load correct attribution
 localStorage.clear(); // Clear everything
@@ -970,5 +978,124 @@ export const getUnreadApprovals = (userName: string): RequestItem[] => {
   } catch (error) {
     console.error('Error getting unread approvals:', error);
     return [];
+  }
+};
+
+// ========== P&P Team Notification Functions ==========
+
+// Get all P&P team notifications from localStorage
+export const getPPTeamNotifications = (): PPTeamNotification[] => {
+  try {
+    const notifications = localStorage.getItem(PP_TEAM_NOTIFICATIONS_KEY);
+    return notifications ? JSON.parse(notifications) : [];
+  } catch (error) {
+    console.error('Error retrieving P&P team notifications from localStorage:', error);
+    return [];
+  }
+};
+
+// Save P&P team notifications to localStorage
+const savePPTeamNotifications = (notifications: PPTeamNotification[]): void => {
+  try {
+    localStorage.setItem(PP_TEAM_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+    // Dispatch custom event to notify UI of notification changes
+    window.dispatchEvent(new CustomEvent('ppTeamNotificationsUpdated'));
+    console.log('P&P team notifications saved and event dispatched');
+  } catch (error) {
+    console.error('Error saving P&P team notifications to localStorage:', error);
+  }
+};
+
+// Create a notification for P&P team members when approver makes a decision
+export const createPPTeamNotification = (requestId: number, type: 'approval' | 'rejection'): void => {
+  try {
+    const request = getRequestById(requestId);
+    if (!request) {
+      console.error(`createPPTeamNotification: Request ${requestId} not found`);
+      return;
+    }
+
+    const notifications = getPPTeamNotifications();
+
+    // Create unique notification ID
+    const notificationId = `pp-notif-${Date.now()}-${requestId}`;
+
+    const newNotification: PPTeamNotification = {
+      id: notificationId,
+      requestId: request.id,
+      ticketNumber: request.ticketNumber,
+      requestDetail: request.requestDetail,
+      type,
+      createdAt: new Date().toISOString(),
+      readBy: []
+    };
+
+    notifications.push(newNotification);
+    savePPTeamNotifications(notifications);
+
+    console.log(`createPPTeamNotification: Created ${type} notification for request ${requestId}`);
+  } catch (error) {
+    console.error('Error creating P&P team notification:', error);
+  }
+};
+
+// Get unread P&P team notifications for a specific user
+export const getUnreadPPNotifications = (userName: string): PPTeamNotification[] => {
+  try {
+    const notifications = getPPTeamNotifications();
+    return notifications.filter(notif => !notif.readBy.includes(userName));
+  } catch (error) {
+    console.error('Error getting unread P&P notifications:', error);
+    return [];
+  }
+};
+
+// Get count of unread P&P team notifications for a user
+export const getUnreadPPNotificationCount = (userName: string): number => {
+  try {
+    const unreadNotifications = getUnreadPPNotifications(userName);
+    console.log(`getUnreadPPNotificationCount for ${userName}: ${unreadNotifications.length} unread notifications`);
+    return unreadNotifications.length;
+  } catch (error) {
+    console.error('Error getting unread P&P notification count:', error);
+    return 0;
+  }
+};
+
+// Mark a P&P team notification as read by a user
+export const markPPNotificationAsRead = (notificationId: string, userName: string): void => {
+  try {
+    const notifications = getPPTeamNotifications();
+    const notification = notifications.find(n => n.id === notificationId);
+
+    if (notification && !notification.readBy.includes(userName)) {
+      notification.readBy.push(userName);
+      savePPTeamNotifications(notifications);
+      console.log(`markPPNotificationAsRead: Notification ${notificationId} marked as read by ${userName}`);
+    }
+  } catch (error) {
+    console.error('Error marking P&P notification as read:', error);
+  }
+};
+
+// Mark all P&P team notifications as read by a user
+export const markAllPPNotificationsAsRead = (userName: string): void => {
+  try {
+    const notifications = getPPTeamNotifications();
+    let updated = false;
+
+    notifications.forEach(notification => {
+      if (!notification.readBy.includes(userName)) {
+        notification.readBy.push(userName);
+        updated = true;
+      }
+    });
+
+    if (updated) {
+      savePPTeamNotifications(notifications);
+      console.log(`markAllPPNotificationsAsRead: All notifications marked as read by ${userName}`);
+    }
+  } catch (error) {
+    console.error('Error marking all P&P notifications as read:', error);
   }
 };
