@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Send, Check, RotateCw, Sparkles, FileText, AlertCircle, Upload, FileUp, Download, Globe, CheckCircle, FilePenLine, Network } from 'lucide-react';
+import { ArrowLeft, Save, Send, Check, RotateCw, Sparkles, FileText, AlertCircle, Upload, FileUp, Download, Globe, CheckCircle, FilePenLine, Network, XCircle } from 'lucide-react';
 import { useDocument } from '../context/DocumentContext';
 import { useLanguage } from '../context/LanguageContext';
+import { useUser } from '../context/UserContext';
+import { rejectRequest } from '../services/requestTracking';
 import axios from 'axios';
 import { bilingualPolicyTemplate, generateBilingualMarkdown, customizeTemplate } from '../utils/documentTemplates';
 import { generateFormattedWordDocument } from '../utils/wordGenerator';
@@ -18,9 +20,8 @@ const DocWriter = () => {
     templateId
   } = useParams();
   const navigate = useNavigate();
-  const {
-    t
-  } = useLanguage();
+  const { t } = useLanguage();
+  const { role } = useUser();
   const {
     createDocument,
     updateDocument,
@@ -50,6 +51,7 @@ const DocWriter = () => {
   const [downloadError, setDownloadError] = useState<string | null>(null);
   const [editMode, setEditMode] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
 
   // Process model state
   const [processModelId, setProcessModelId] = useState<string | null>(null);
@@ -509,6 +511,19 @@ Please format the document using Markdown syntax.
       navigate(`/docwriter`);
     }
   };
+
+  const handleRejectRequest = () => {
+    if (requestId) {
+      // Reject the request
+      rejectRequest(parseInt(requestId), role === 'pp_team' ? 'P&P Team' : 'Unknown', 'Request rejected before document generation');
+
+      // Close modal
+      setShowRejectConfirm(false);
+
+      // Navigate back to manage requests
+      navigate('/manage-requests');
+    }
+  };
   const handleDownloadWord = async () => {
     if (document && document.content) {
       try {
@@ -654,236 +669,293 @@ Please format the document using Markdown syntax.
                 <textarea id="additionalContext" name="additionalContext" rows={4} value={formState.additionalContext} onChange={handleInputChange} placeholder="Provide any additional information that would help in generating a better document" className="shadow-sm focus:ring-[#FECC0E] focus:border-[#FECC0E] block w-full sm:text-sm border-gray-300 rounded-md px-4 py-3" />
               </div>
             </div>
-          </div>
-          <div className="mt-6 flex justify-end space-x-3">
-            <button type="button" onClick={handleBackToRequest} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-              Cancel
-            </button>
-            <button type="button" onClick={handleNextStep} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
-              Next
-            </button>
-          </div>
-        </div>}
-        {formStep === 'additionalDocs' && <div className="px-4 py-5 sm:px-6">
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Upload Additional Documents
-              </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
-                <div className="space-y-1 text-center">
-                  <FileUp className="mx-auto h-12 w-12 text-gray-400" />
-                  <div className="flex text-sm text-gray-600">
-                    <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
-                      <span>Upload a document</span>
-                      <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".doc,.docx,.pdf,.txt,.md,.xml" onChange={handleFileChange} />
-                    </label>
-                    <p className="pl-1">or drag and drop</p>
-                  </div>
-                  <p className="text-xs text-gray-500">
-                    DOC, DOCX, PDF, TXT, MD, XML up to 10MB
-                  </p>
-                </div>
-              </div>
-              {additionalDocFile && <p className="mt-2 text-sm text-gray-500">
-                Selected file: {additionalDocFile.name}
-              </p>}
-            </div>
-            <div className="mt-6 flex justify-between">
-              <button type="button" onClick={handlePrevStep} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                Back
-              </button>
-              <button type="button" onClick={handleGenerateDocument} disabled={isGenerating} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
-                {isGenerating ? <>
-                  <RotateCw className="animate-spin -ml-1 mr-2 h-4 w-4" />
-                  Generating...
-                </> : <>
-                  <Sparkles className="-ml-1 mr-2 h-4 w-4" />
-                  Generate Document
-                </>}
-              </button>
-            </div>
-          </div>
-        </div>}
-      </div> : document && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
-            <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
-              <div>
-                <h2 className="text-lg font-medium text-gray-900">
-                  Document Editor
-                </h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Review and edit the generated document before sending
-                  for approval
-                </p>
-              </div>
-              <div className="flex space-x-3">
+            <div className="mt-6 flex justify-between space-x-3">
+              {/* Show reject button for P&P team members */}
+              {role === 'pp_team' && requestId && (
                 <button
                   type="button"
-                  onClick={() => navigate(`/process-model-creator/${requestId}`)}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]"
+                  onClick={() => setShowRejectConfirm(true)}
+                  className="px-4 py-2 border border-red-600 shadow-sm text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center"
                 >
-                  <Network className="-ml-0.5 mr-2 h-4 w-4" />
-                  {processModelId ? 'Edit Process Model' : 'Create Process Model'}
+                  <XCircle className="-ml-1 mr-2 h-4 w-4" />
+                  Reject Request
                 </button>
-                <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                  <Save className="-ml-0.5 mr-2 h-4 w-4" />
-                  Save Draft
+              )}
+              <div className="flex-1" />
+              <div className="flex space-x-3">
+                <button type="button" onClick={handleBackToRequest} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                  Cancel
                 </button>
-                <button type="button" onClick={handleDownloadWord} disabled={isDownloading} className={`inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E] ${isDownloading ? 'opacity-75 cursor-not-allowed' : ''}`}>
-                  {isDownloading ? <>
-                    <RotateCw className="animate-spin -ml-0.5 mr-2 h-4 w-4" />
-                    Generating...
-                  </> : <>
-                    <Download className="-ml-0.5 mr-2 h-4 w-4" />
-                    Download as Word
-                  </>}
-                </button>
-                <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                  <Send className="-ml-0.5 mr-2 h-4 w-4" />
-                  Send to Approver
+                <button type="button" onClick={handleNextStep} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
+                  Next
                 </button>
               </div>
             </div>
-            {/* Download status notifications */}
-            {downloadSuccess && <div className="px-4 py-3 bg-green-50 border-b border-green-200">
-              <div className="flex">
-                <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
-                <p className="text-sm text-green-700">
-                  Document successfully downloaded as Word
-                </p>
-              </div>
-            </div>}
-            {downloadError && <div className="px-4 py-3 bg-red-50 border-b border-red-200">
-              <div className="flex">
-                <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                <p className="text-sm text-red-700">{downloadError}</p>
-              </div>
-            </div>}
-
-            {/* Process Model Preview */}
-            {processModelImage && (
-              <div className="px-4 py-4 bg-gray-50 border-b border-gray-200">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-900">Process Flow Diagram</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">{processModelTitle}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/process-model-creator/${requestId}`)}
-                    className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
-                  >
-                    <Network className="h-3.5 w-3.5 mr-1" />
-                    Edit Model
-                  </button>
-                </div>
-                <div className="bg-white p-3 rounded border border-gray-300">
-                  <img
-                    src={processModelImage}
-                    alt="Process Model"
-                    className="w-full rounded"
-                  />
-                </div>
-                <p className="text-xs text-gray-500 mt-2 flex items-center">
-                  <AlertCircle className="h-3 w-3 mr-1" />
-                  This process diagram will be automatically embedded in the generated Word document
-                </p>
-              </div>
-            )}
-
-            {document.status === 'Needs Revision' && <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-200">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-yellow-800">
-                    Revision Required
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
-                    <p>
-                      The document needs more detail on the multi-factor
-                      authentication implementation requirements. Please
-                      revise section 3.2 to include specific guidance
-                      for different user roles.
+          </div>}
+          {formStep === 'additionalDocs' && <div className="px-4 py-5 sm:px-6">
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Upload Additional Documents
+                </label>
+                <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                  <div className="space-y-1 text-center">
+                    <FileUp className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="flex text-sm text-gray-600">
+                      <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                        <span>Upload a document</span>
+                        <input id="file-upload" name="file-upload" type="file" className="sr-only" accept=".doc,.docx,.pdf,.txt,.md,.xml" onChange={handleFileChange} />
+                      </label>
+                      <p className="pl-1">or drag and drop</p>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      DOC, DOCX, PDF, TXT, MD, XML up to 10MB
                     </p>
                   </div>
                 </div>
+                {additionalDocFile && <p className="mt-2 text-sm text-gray-500">
+                  Selected file: {additionalDocFile.name}
+                </p>}
               </div>
-            </div>}
-            <div className="px-4 py-5 sm:px-6">
-              <div className="flex items-center mb-4 text-sm text-gray-500">
-                <FileText className="mr-2 h-5 w-5 text-gray-400" />
-                <span>{formState.title}</span>
-                {formState.documentLanguage === 'bilingual' && <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                  Bilingual
-                </span>}
-                {formState.documentLanguage === 'arabic' && <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                  Arabic
-                </span>}
+              <div className="mt-6 flex justify-between">
+                {/* Show reject button for P&P team members */}
+                {role === 'pp_team' && requestId && (
+                  <button
+                    type="button"
+                    onClick={() => setShowRejectConfirm(true)}
+                    className="px-4 py-2 border border-red-600 shadow-sm text-sm font-medium rounded-md text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center"
+                  >
+                    <XCircle className="-ml-1 mr-2 h-4 w-4" />
+                    Reject Request
+                  </button>
+                )}
+                <div className="flex-1" />
+                <div className="flex space-x-3">
+                  <button type="button" onClick={handlePrevStep} className="px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                    Back
+                  </button>
+                  <button type="button" onClick={handleGenerateDocument} disabled={isGenerating} className="px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 flex items-center">
+                    {isGenerating ? <>
+                      <RotateCw className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                      Generating...
+                    </> : <>
+                      <Sparkles className="-ml-1 mr-2 h-4 w-4" />
+                      Generate Document
+                    </>}
+                  </button>
+                </div>
               </div>
-              {/* Enhanced bilingual document display */}
-              <div className={`border border-gray-300 rounded-md shadow-sm ${formState.documentLanguage === 'bilingual' ? 'bilingual-document' : ''}`}>
-                <textarea rows={25} value={document.content} onChange={handleContentChange} className="block w-full border-0 p-4 font-mono text-sm focus:ring-[#FECC0E] focus:border-[#FECC0E]" style={{
-                  lineHeight: 1.6,
-                  direction: formState.documentLanguage === 'arabic' ? 'rtl' : 'ltr'
-                }} onMouseUp={handleTextSelection} />
+            </div>
+          </div>}
+        </div> : document && <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2">
+            <div className="bg-white shadow rounded-lg overflow-hidden mb-8">
+              <div className="px-4 py-5 sm:px-6 border-b border-gray-200 flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-medium text-gray-900">
+                    Document Editor
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Review and edit the generated document before sending
+                    for approval
+                  </p>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={() => window.open('https://arqitek-ae.avolutionsoftware.com/Browser/?p=Content%2FDiagrams%2F8258307.html', '_blank')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]"
+                  >
+                    <Network className="-ml-0.5 mr-2 h-4 w-4" />
+                    Amend Process Model
+                  </button>
+                  <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                    <Save className="-ml-0.5 mr-2 h-4 w-4" />
+                    Save Draft
+                  </button>
+                  <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-3 py-2 border border-transparent shadow-sm text-sm leading-4 font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    <Send className="-ml-0.5 mr-2 h-4 w-4" />
+                    Send to Approver
+                  </button>
+                </div>
               </div>
-              <style jsx>{`
+              {/* Download status notifications */}
+              {downloadSuccess && <div className="px-4 py-3 bg-green-50 border-b border-green-200">
+                <div className="flex">
+                  <CheckCircle className="h-5 w-5 text-green-400 mr-2" />
+                  <p className="text-sm text-green-700">
+                    Document successfully downloaded as Word
+                  </p>
+                </div>
+              </div>}
+              {downloadError && <div className="px-4 py-3 bg-red-50 border-b border-red-200">
+                <div className="flex">
+                  <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+                  <p className="text-sm text-red-700">{downloadError}</p>
+                </div>
+              </div>}
+
+              {/* Process Model Preview */}
+              {processModelImage && (
+                <div className="px-4 py-4 bg-gray-50 border-b border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900">Process Flow Diagram</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">{processModelTitle}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/process-model-creator/${requestId}`)}
+                      className="inline-flex items-center px-2.5 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50"
+                    >
+                      <Network className="h-3.5 w-3.5 mr-1" />
+                      Edit Model
+                    </button>
+                  </div>
+                  <div className="bg-white p-3 rounded border border-gray-300">
+                    <img
+                      src={processModelImage}
+                      alt="Process Model"
+                      className="w-full rounded"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2 flex items-center">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    This process diagram will be automatically embedded in the generated Word document
+                  </p>
+                </div>
+              )}
+
+              {document.status === 'Needs Revision' && <div className="px-4 py-3 bg-yellow-50 border-b border-yellow-200">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-yellow-800">
+                      Revision Required
+                    </h3>
+                    <div className="mt-2 text-sm text-yellow-700">
+                      <p>
+                        The document needs more detail on the multi-factor
+                        authentication implementation requirements. Please
+                        revise section 3.2 to include specific guidance
+                        for different user roles.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>}
+              <div className="px-4 py-5 sm:px-6">
+                <div className="flex items-center mb-4 text-sm text-gray-500">
+                  <FileText className="mr-2 h-5 w-5 text-gray-400" />
+                  <span>{formState.title}</span>
+                  {formState.documentLanguage === 'bilingual' && <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                    Bilingual
+                  </span>}
+                  {formState.documentLanguage === 'arabic' && <span className="ml-2 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                    Arabic
+                  </span>}
+                </div>
+                {/* Enhanced bilingual document display */}
+                <div className={`border border-gray-300 rounded-md shadow-sm ${formState.documentLanguage === 'bilingual' ? 'bilingual-document' : ''}`}>
+                  <textarea rows={25} value={document.content} onChange={handleContentChange} className="block w-full border-0 p-4 font-mono text-sm focus:ring-[#FECC0E] focus:border-[#FECC0E]" style={{
+                    lineHeight: 1.6,
+                    direction: formState.documentLanguage === 'arabic' ? 'rtl' : 'ltr'
+                  }} onMouseUp={handleTextSelection} />
+                </div>
+                <style jsx>{`
                       .bilingual-document textarea {
                         white-space: pre-wrap;
                         overflow-wrap: break-word;
                       }
                     `}</style>
-              <div className="mt-6 flex justify-between">
-                <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                  Back to Form
-                </button>
-                <div className="flex space-x-3">
-                  <button type="button" onClick={() => navigate('/process-model-creator')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                    <Network className="-ml-1 mr-2 h-5 w-5" />
-                    Create Process Model
+                <div className="mt-6 flex justify-between">
+                  <button type="button" onClick={() => setShowForm(true)} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                    Back to Form
                   </button>
-                  <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
-                    <Save className="-ml-1 mr-2 h-5 w-5" />
-                    Save Draft
-                  </button>
-                  <button type="button" onClick={handleDownloadWord} disabled={isDownloading} className={`inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E] ${isDownloading ? 'opacity-75 cursor-not-allowed' : ''}`}>
-                    {isDownloading ? <>
-                      <RotateCw className="animate-spin -ml-1 mr-2 h-5 w-5" />
-                      Generating...
-                    </> : <>
-                      <Download className="-ml-1 mr-2 h-5 w-5" />
-                      Download as Word
-                    </>}
-                  </button>
-                  <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    <Send className="-ml-1 mr-2 h-5 w-5" />
-                    Send to Approver
-                  </button>
+                  <div className="flex space-x-3">
+                    <button type="button" onClick={() => window.open('https://arqitek-ae.avolutionsoftware.com/Browser/?p=Content%2FDiagrams%2F8258307.html', '_blank')} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                      <Network className="-ml-1 mr-2 h-5 w-5" />
+                      Amend Process Model
+                    </button>
+                    <button type="button" onClick={handleSaveDraft} className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FECC0E]">
+                      <Save className="-ml-1 mr-2 h-5 w-5" />
+                      Save Draft
+                    </button>
+                    <button type="button" onClick={handleSendToApprover} className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                      <Send className="-ml-1 mr-2 h-5 w-5" />
+                      Send to Approver
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+          {/* Right sidebar for comments and version history */}
+          <div className="space-y-8">
+            {/* Add CommentSection component */}
+            {document.id && <CommentSection documentId={document.id} documentContent={document.content} />}
+            {/* Add VersionHistory component */}
+            {document.id && <VersionHistory documentId={document.id} currentContent={document.content} documentTitle={formState.title} language={formState.documentLanguage} onRestoreVersion={content => {
+              if (document) {
+                setDocument({
+                  ...document,
+                  content: content
+                });
+              }
+            }} />}
+          </div>
+        </div>}
+      </div>
+
+    {/* Rejection Confirmation Modal */}
+      {showRejectConfirm && (
+        <div className="fixed z-10 inset-0 overflow-y-auto">
+          <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true" onClick={() => setShowRejectConfirm(false)}>
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">
+              &#8203;
+            </span>
+            <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+              <div className="sm:flex sm:items-start">
+                <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                  <XCircle className="h-6 w-6 text-red-600" aria-hidden="true" />
+                </div>
+                <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                    Reject Request
+                  </h3>
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500">
+                      Are you sure you want to reject this request? This action will notify the requester that their request has been declined. You will not generate a document for this request.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  onClick={handleRejectRequest}
+                >
+                  Reject Request
+                </button>
+                <button
+                  type="button"
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm"
+                  onClick={() => setShowRejectConfirm(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        {/* Right sidebar for comments and version history */}
-        <div className="space-y-8">
-          {/* Add CommentSection component */}
-          {document.id && <CommentSection documentId={document.id} documentContent={document.content} />}
-          {/* Add VersionHistory component */}
-          {document.id && <VersionHistory documentId={document.id} currentContent={document.content} documentTitle={formState.title} language={formState.documentLanguage} onRestoreVersion={content => {
-            if (document) {
-              setDocument({
-                ...document,
-                content: content
-              });
-            }
-          }} />}
-        </div>
-      </div>}
+      )}
     </div>
-  </div>;
+  </div >;
 };
 export default DocWriter;

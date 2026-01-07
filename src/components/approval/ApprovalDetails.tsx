@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, User, CheckCircle, MessageCircle, FileText, AlertCircle, FileEdit, UserPlus, XCircle, Zap, ExternalLink, Check, Download } from 'lucide-react';
+import { ArrowLeft, CheckCircle, FileText, XCircle, ExternalLink, Download } from 'lucide-react';
 import { generateFormattedWordDocument } from '../../utils/wordGenerator';
 import { getProcessModelImage } from '../../utils/processModelUtils';
 import { useDocument } from '../../context/DocumentContext';
-import { getRequestById } from '../../services/requestTracking';
+import { getRequestById, createPPTeamNotification } from '../../services/requestTracking';
 interface ApprovalDetailsProps {
   requestId: number;
   onBackToList: () => void;
@@ -13,7 +12,6 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
   requestId,
   onBackToList
 }) => {
-  const navigate = useNavigate();
   const { getDocumentByRequestId, getDocumentById } = useDocument();
   const [showApproveConfirm, setShowApproveConfirm] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
@@ -164,6 +162,10 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         icon: CheckCircle
       });
     }
+
+    // Create notification for P&P team member to publish the document
+    createPPTeamNotification(request.id, 'approval');
+
     // Update request status (simplified, no setStatus call needed)
     setShowApproveConfirm(false);
     // In a real app, this would make an API call to update the request status
@@ -193,6 +195,10 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
         icon: XCircle
       });
     }
+
+    // Create notification for P&P team member to review the document
+    createPPTeamNotification(request.id, 'rejection');
+
     // Update request status (simplified, no setStatus call needed)
     setShowRejectConfirm(false);
     // In a real app, this would make an API call to update the request status
@@ -232,13 +238,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             </button>
           </>}
           <a
-            href={requestDocument ? `/docwriter/${request.id}` : '#'}
-            onClick={(e) => {
-              if (!requestDocument) {
-                e.preventDefault();
-                alert('No document has been generated for this request yet');
-              }
-            }}
+            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=GQ6rea"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -246,13 +246,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             <FileText size={14} className="mr-1" />
             View Document
           </a>
-          <button
-            onClick={handleDownloadDocument}
-            className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-          >
-            <Download size={14} className="mr-1" />
-            Download as Word
-          </button>
+
         </div>
       </div>
       <div className="border-t border-gray-200 px-4 py-5 sm:px-6">
@@ -338,13 +332,9 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
               </span>
             </div>
             <a
-              href={requestDocument ? `/docwriter/${request.id}` : '#'}
-              onClick={(e) => {
-                if (!requestDocument) {
-                  e.preventDefault();
-                  alert('No document has been generated for this request yet');
-                }
-              }}
+              href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz"
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150"
             >
               <ExternalLink size={16} className="mr-1" />
@@ -499,22 +489,21 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             </div>
             <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
               <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                Reject Document
+                Confirm Rejection
               </h3>
               <div className="mt-2">
                 <p className="text-sm text-gray-500">
-                  Are you sure you want to reject this document? This action
-                  will return the document to the author for revision.
+                  Have you provided rejection comments for this document? Please ensure you have added comments explaining the reason for rejection before confirming.
                 </p>
               </div>
             </div>
           </div>
           <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
             <button type="button" className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm" onClick={handleReject}>
-              Reject
+              Confirm Rejection
             </button>
             <button type="button" className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto sm:text-sm" onClick={() => setShowRejectConfirm(false)}>
-              Cancel
+              Back
             </button>
           </div>
         </div>
