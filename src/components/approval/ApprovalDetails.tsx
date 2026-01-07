@@ -243,7 +243,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
             </button>
           </>}
           <a
-            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=GQ6rea"
+            href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQBcOyDhQr5lQoXIDfaQWDVCAfrX0bPBBnSVexqdmRNj8GE?e=43pf6q"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
@@ -337,7 +337,7 @@ const ApprovalDetails: React.FC<ApprovalDetailsProps> = ({
               </span>
             </div>
             <a
-              href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz"
+              href="https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQBcOyDhQr5lQoXIDfaQWDVCAfrX0bPBBnSVexqdmRNj8GE?e=43pf6q"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm leading-5 font-medium rounded-md text-gray-700 bg-white hover:text-gray-500 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue active:text-gray-800 active:bg-gray-50 transition ease-in-out duration-150"

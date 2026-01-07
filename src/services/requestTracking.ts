@@ -96,7 +96,7 @@ const updateExistingRequestsWithUrls = () => {
     if (request.attachments) {
       const updatedAttachments = request.attachments.map(attachment => {
         if (attachment.name === 'Business Processes and Procedures Manual' && !attachment.url) {
-          return { ...attachment, url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz' };
+          return { ...attachment, url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQBcOyDhQr5lQoXIDfaQWDVCAfrX0bPBBnSVexqdmRNj8GE?e=43pf6q' };
         }
         if (attachment.name === 'SAMA_EN_10831_VER1' && !attachment.url) {
           return { ...attachment, url: 'https://arqitek.sharepoint.com/:b:/s/DELSAIBBPM4.0/IQDj2HBSKMCcRKYd85fAaSA4AVMHoNQzt-ZIkziCvmTR8Jo?e=ijFWr5' };
@@ -518,7 +518,7 @@ export const addRequest = (request: Omit<RequestItem, 'id' | 'ticketNumber' | 'd
           size: '2.1 MB',
           uploadedBy: 'Salem Doe',
           date: dateCreated,
-          url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQCaS8I5BF47Q59FDrXYiCHuATohzQcv1iPOgu4hjC8MXmA?e=LUqwkz',
+          url: 'https://arqitek.sharepoint.com/:w:/s/DELSAIBBPM4.0/IQBcOyDhQr5lQoXIDfaQWDVCAfrX0bPBBnSVexqdmRNj8GE?e=43pf6q',
           icon: '/microsoft-word-icon.webp'
         },
         {
